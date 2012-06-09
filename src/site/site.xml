@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="ISO-8859-1"?>
+<project name="onebusaway-uk">
+  <body>
+    <links>
+      <item name="GitHub Project" href="http://github.com/OneBusAway/onebusaway-uk/" />
+    </links>
+    <menu name="onebusaway-uk">
+      <item name="About" href="/index.html" />
+      <item name="GitHub Project" href="http://github.com/OneBusAway/onebusaway-uk/" />
+      <item name="Release Notes" href="/release-notes.html" />
+      <item name="API Javadoc" href="/apidocs/index.html" />
+      <item name="ATCO-CIF to GTFS" href="/onebusaway-uk-atco-cif-to-gtfs-converter.html" />
+    </menu>
+    <menu ref="reports" />
+  </body>
+</project>
