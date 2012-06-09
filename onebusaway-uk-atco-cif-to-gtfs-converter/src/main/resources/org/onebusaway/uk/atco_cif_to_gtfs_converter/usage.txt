@@ -1,0 +1,38 @@
+Usage:
+
+  [args] atco_cif_input_path gtfs_output_path
+
+Args:
+
+  The program requires two arguments:
+  
+    atco_cif_input_path - a path point to either a CIF file or a directory
+      containing CIF files, that will be read as input.
+    gtfs_output_path - a path where the resulting GTFS feed will be
+      written.
+  
+  The following optional arguments can be used to control how the agency entry
+  in the GTFS agency.txt file is populated:
+
+    --agencyId=...        specify the agency id used for the feed
+    --agencyName=...      specify the agency name used for the feed
+    --agencyUrl=...       specify the agency url used for the feed
+    --agencyTimezone...   specify the agency timezone used for the feed
+    --agencyLang=...      specify the agency lang used for the feed
+    --agencyPhone=...     specify the agency phone used for the feed
+
+  Because ATCO CIF files don't specify vehicle types (bus vs rail) in a
+  consistent way, you can specify the GTFS vehicle type for routes in the new
+  GTFS feed:
+   
+    --vehicleType=...     specify a default GTFS route vehicle type for the feed
+
+  If you have stops without location information in your ATCO CIF feed, it is
+  possible to prune them from resulting GTFS feed, along with their stop times:
+  
+    --pruneStopsWithNoLocationInfo
+    
+  It is also possible to prune stops that have a particular stop id prefix.
+  
+    --pruneStopsWithPrefix=...
+  
