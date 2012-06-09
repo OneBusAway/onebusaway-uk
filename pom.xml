@@ -43,6 +43,7 @@
     <module>onebusaway-uk-network-rail-cif-parser</module>
     <module>onebusaway-uk-network-rail-gtfs-realtime</module>
     <module>onebusaway-uk-parser-support</module>
+    <module>onebusaway-uk-atco-cif-parser</module>
   </modules>
 
   <dependencyManagement>
