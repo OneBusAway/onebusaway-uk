@@ -45,11 +45,11 @@ import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 
-public class RealTimeMain {
+public class NetworkRailToGtfsRealtimeMain {
 
-  private static final Logger _log = LoggerFactory.getLogger(RealTimeMain.class);
+  private static final Logger _log = LoggerFactory.getLogger(NetworkRailToGtfsRealtimeMain.class);
 
-  private static final String ARG_USERNAME = "userName";
+  private static final String ARG_USERNAME = "username";
 
   private static final String ARG_PASSWORD = "password";
 
@@ -70,7 +70,7 @@ public class RealTimeMain {
   private String _logPath = null;
 
   public static void main(String[] args) throws Exception {
-    RealTimeMain m = new RealTimeMain();
+    NetworkRailToGtfsRealtimeMain m = new NetworkRailToGtfsRealtimeMain();
     m.run(args);
   }
 
