@@ -28,7 +28,7 @@
       <includes>
         <include>*.rpm</include>
       </includes>
-      <directory>target/rpm/onebusaway-siri-repeater/RPMS/noarch</directory>
+      <directory>target/rpm/onebusaway-uk-network-rail-gtfs-realtime/RPMS/noarch</directory>
       <outputDirectory>/</outputDirectory>
     </fileSet>
   </fileSets>
