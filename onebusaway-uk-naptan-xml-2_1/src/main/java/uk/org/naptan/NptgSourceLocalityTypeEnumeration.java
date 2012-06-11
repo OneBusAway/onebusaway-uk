@@ -55,14 +55,14 @@ public enum NptgSourceLocalityTypeEnumeration {
     US("US"),
 
     /**
-     * Parish Ð not Wales.
+     * Parish not Wales.
      * 
      */
     @XmlEnumValue("Pa")
     PA("Pa"),
 
     /**
-     * Community Ð Wales only.
+     * Community Wales only.
      * 
      */
     @XmlEnumValue("Co")
@@ -76,25 +76,25 @@ public enum NptgSourceLocalityTypeEnumeration {
     LO("Lo"),
 
     /**
-     * Scottish District Ward Ð Scotland only.
+     * Scottish District Ward Scotland only.
      * 
      */
     DWD("DWD"),
 
     /**
-     * Scottish Locality Ð Scotland only.
+     * Scottish Locality Scotland only.
      * 
      */
     LOC("LOC"),
 
     /**
-     * Scottish Parish Ð Scotland only.
+     * Scottish Parish Scotland only.
      * 
      */
     PAR("PAR"),
 
     /**
-     * Scottish Registered Electoral District Ð Scotland only.
+     * Scottish Registered Electoral District Scotland only.
      * 
      */
     RED("RED"),
