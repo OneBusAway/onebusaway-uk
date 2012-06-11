@@ -41,8 +41,8 @@
       <artifactId>slf4j-log4j12</artifactId>
     </dependency>
   </dependencies>
-  
-    <build>
+
+  <build>
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>

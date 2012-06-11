@@ -54,6 +54,137 @@
       <artifactId>commons-cli</artifactId>
       <version>1.2</version>
     </dependency>
+    <dependency>
+      <groupId>org.onebusaway</groupId>
+      <artifactId>onebusaway-cli</artifactId>
+    </dependency>
   </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <artifactId>maven-shade-plugin</artifactId>
+        <executions>
+          <execution>
+            <phase>package</phase>
+            <goals>
+              <goal>shade</goal>
+            </goals>
+            <configuration>
+              <shadedClassifierName>withAllDependencies</shadedClassifierName>
+              <transformers>
+                <transformer
+                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                  <mainClass>org.onebusaway.uk.network_rail.gtfs_realtime.RealTimeMain</mainClass>
+                </transformer>
+              </transformers>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+    </plugins>
+  </build>
+
+  <profiles>
+    <profile>
+      <id>rpm</id>
+      <activation>
+        <file>
+          <exists>/usr/bin/rpmbuild</exists>
+        </file>
+      </activation>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.codehaus.mojo</groupId>
+            <artifactId>rpm-maven-plugin</artifactId>
+            <version>2.1-alpha-1</version>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>rpm</goal>
+                </goals>
+              </execution>
+            </executions>
+            <configuration>
+              <name>onebusaway-uk-network-rail-gtfs-realtime</name>
+              <copyright>Apache License V2</copyright>
+              <group>Application/Transit</group>
+              <packager>OneBusAway</packager>
+              <prefix>/usr</prefix>
+              <release>0</release>
+              <mappings>
+                <!-- The JAR file -->
+                <mapping>
+                  <directory>/usr/share/onebusaway-uk-network-rail-gtfs-realtime</directory>
+                  <filemode>644</filemode>
+                  <username>root</username>
+                  <groupname>root</groupname>
+                  <artifact />
+                </mapping>
+                <!-- Configuration files -->
+                <mapping>
+                  <directory>/etc/onebusaway-uk-network-rail-gtfs-realtime</directory>
+                  <configuration>true</configuration>
+                  <filemode>640</filemode>
+                  <username>root</username>
+                  <groupname>root</groupname>
+                  <sources>
+                    <source>
+                      <location>src/main/rpm/etc/onebusaway-uk-network-rail-gtfs-realtime</location>
+                    </source>
+                  </sources>
+                </mapping>
+                <!-- Init.d Scripts -->
+                <mapping>
+                  <directory>/etc/init.d</directory>
+                  <directoryIncluded>false</directoryIncluded>
+                  <filemode>755</filemode>
+                  <username>root</username>
+                  <groupname>root</groupname>
+                  <sources>
+                    <source>
+                      <location>src/main/rpm/etc/init.d</location>
+                    </source>
+                  </sources>
+                </mapping>
+                <!-- Log Directory -->
+                <mapping>
+                  <directory>/var/log/onebusaway-uk-network-rail-gtfs-realtime</directory>
+                  <filemode>750</filemode>
+                  <username>root</username>
+                  <groupname>root</groupname>
+                </mapping>
+              </mappings>
+              <postinstallScriptlet>
+                <script>chkconfig --add onebusaway-uk-network-rail-gtfs-realtime</script>
+              </postinstallScriptlet>
+              <preremoveScriptlet>
+                <script>chkconfig --del onebusaway-uk-network-rail-gtfs-realtime</script>
+              </preremoveScriptlet>
+            </configuration>
+          </plugin>
+          <plugin>
+            <groupId>org.apache.maven.plugins</groupId>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <executions>
+              <execution>
+                <phase>package</phase>
+                <goals>
+                  <goal>single</goal>
+                </goals>
+                <configuration>
+                  <descriptors>
+                    <descriptor>assembly.xml</descriptor>
+                  </descriptors>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
 
 </project>
