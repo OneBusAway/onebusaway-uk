@@ -39,12 +39,13 @@
   </distributionManagement>
 
   <modules>
+    <module>onebusaway-uk-atco-cif-parser</module>
+    <module>onebusaway-uk-atco-cif-to-gtfs-converter</module>
     <module>onebusaway-uk-atoc-timetable-parser</module>
+    <module>onebusaway-uk-naptan-xml-2_1</module>
     <module>onebusaway-uk-network-rail-cif-parser</module>
     <module>onebusaway-uk-network-rail-gtfs-realtime</module>
     <module>onebusaway-uk-parser-support</module>
-    <module>onebusaway-uk-atco-cif-parser</module>
-    <module>onebusaway-uk-atco-cif-to-gtfs-converter</module>
   </modules>
 
   <dependencyManagement>
