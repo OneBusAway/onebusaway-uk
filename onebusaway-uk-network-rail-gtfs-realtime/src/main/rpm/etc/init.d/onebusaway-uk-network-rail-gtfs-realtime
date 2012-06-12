@@ -67,10 +67,14 @@ JAVA="${JAVA:-java}"
 PID_FILE="/var/run/${NAME}.pid"
 LOCK_FILE="/var/lock/subsys/${NAME}"
 
-APPLICATION_ARGS="${APPLICATION_ARGS:-}"
+USERNAME="${USERNAME:-}"
+PASSWORD="${PASSWORD:-}"
+ATOC_TIMETABLE_PATH="${ATOC_TIMETABLE_PATH:-}"
 
-# Define th command to launch the application
-APPLICATION_CMD="java -jar ${JAR_FILE} -daemonize -pidFile ${PID_FILE} -outputFile \"&2\" -errorFile ${LOG_FILE} ${APPLICATION_ARGS}" 
+ALL_ARGS="--username=${USERNAME} --password=${PASSWORD} --atocTimetablePath=${ATOC_TIMETABLE_PATH} ${APPLICATION_ARGS}"
+
+# Define the command to launch the application
+APPLICATION_CMD="java -jar ${JAR_FILE} -daemonize -pidFile ${PID_FILE} -outputFile \"&2\" -errorFile ${LOG_FILE}  ${ALL_ARGS}" 
 
 RETVAL="0"
 
