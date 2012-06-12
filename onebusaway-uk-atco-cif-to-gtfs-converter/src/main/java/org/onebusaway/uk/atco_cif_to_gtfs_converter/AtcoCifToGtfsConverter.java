@@ -349,7 +349,7 @@ public class AtcoCifToGtfsConverter {
   }
 
   private ServiceDate getServiceDate(Date date) {
-    Calendar c = Calendar.getInstance(TimeZone.getTimeZone("GMT"));
+    Calendar c = Calendar.getInstance(TimeZone.getTimeZone("Europe/London"));
     c.setTime(date);
     return new ServiceDate(c);
   }

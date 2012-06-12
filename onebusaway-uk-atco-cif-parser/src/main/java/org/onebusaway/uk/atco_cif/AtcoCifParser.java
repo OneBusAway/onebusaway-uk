@@ -75,7 +75,7 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     c.add(Calendar.YEAR, 2);
     _maxServiceDate = c.getTime();
 
-    _serviceDateFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+    _serviceDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
   }
 
   @Override

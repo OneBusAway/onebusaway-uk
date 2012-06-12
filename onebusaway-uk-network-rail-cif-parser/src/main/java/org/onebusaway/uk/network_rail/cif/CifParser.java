@@ -55,7 +55,7 @@ public class CifParser extends AbstractParser<CifElement.Type> {
     _typesByKey.put("CR", CifElement.Type.CHANGE_EN_ROUTE);
     _typesByKey.put("ZZ", CifElement.Type.UNKNOWN);
 
-    TimeZone tz = TimeZone.getTimeZone("GMT");
+    TimeZone tz = TimeZone.getTimeZone("Europe/London");
     _yearMonthDayDateFormat.setTimeZone(tz);
   }
 
@@ -111,9 +111,9 @@ public class CifParser extends AbstractParser<CifElement.Type> {
     HeaderElement element = element(new HeaderElement());
 
     SimpleDateFormat extractTimeformat = new SimpleDateFormat("ddMMyyHHmm");
-    extractTimeformat.setTimeZone(TimeZone.getTimeZone("GMT"));
+    extractTimeformat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
     SimpleDateFormat extractRangeFormat = new SimpleDateFormat("ddMMyy");
-    extractRangeFormat.setTimeZone(TimeZone.getTimeZone("GMT"));
+    extractRangeFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
 
     element.setFileMainframeIdentity(pop(20));
     element.setExtractTime(parseDate(extractTimeformat, pop(10)));
