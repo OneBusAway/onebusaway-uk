@@ -61,6 +61,7 @@
   </dependencies>
 
   <build>
+    <finalName>onebusaway-uk-network-rail-gtfs-realtime</finalName> 
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
