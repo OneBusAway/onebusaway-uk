@@ -62,6 +62,7 @@ LOG_FILE="${LOG_FILE:-/var/log/onebusaway-uk-network-rail-gtfs-realtime/onebusaw
 
 # Define the java executable
 JAVA="${JAVA:-java}"
+JVM_ARGS="${JVM_ARGS:-}"
 
 # Define the PID file
 PID_FILE="/var/run/${NAME}.pid"
@@ -74,7 +75,7 @@ ATOC_TIMETABLE_PATH="${ATOC_TIMETABLE_PATH:-}"
 ALL_ARGS="--username=${USERNAME} --password=${PASSWORD} --atocTimetablePath=${ATOC_TIMETABLE_PATH} ${APPLICATION_ARGS}"
 
 # Define the command to launch the application
-APPLICATION_CMD="java -jar ${JAR_FILE} -daemonize -pidFile ${PID_FILE} -outputFile \"&2\" -errorFile ${LOG_FILE}  ${ALL_ARGS}" 
+APPLICATION_CMD="java ${JVM_ARGS} -jar ${JAR_FILE} -daemonize -pidFile ${PID_FILE} -outputFile \"&2\" -errorFile ${LOG_FILE}  ${ALL_ARGS}" 
 
 RETVAL="0"
 
