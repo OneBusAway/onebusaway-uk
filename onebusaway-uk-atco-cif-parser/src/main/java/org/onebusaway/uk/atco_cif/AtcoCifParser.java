@@ -53,6 +53,8 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
 
   private Date _maxServiceDate;
 
+  private double _locationScaleFactor = 1.0;
+
   public AtcoCifParser() {
     _typesByKey.put("QS", AtcoCifElement.Type.JOURNEY_HEADER);
     _typesByKey.put("QE", AtcoCifElement.Type.JOURNEY_DATE_RUNNING);
@@ -76,6 +78,18 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     _maxServiceDate = c.getTime();
 
     _serviceDateFormat.setTimeZone(TimeZone.getTimeZone("Europe/London"));
+  }
+
+  /**
+   * If northing and easting values used in Additional Location (QB) records
+   * have been scaled by some constant fator, it can be specified here, so that
+   * the values can be normalized back to meters before projection to lat-lon
+   * locations.
+   * 
+   * @param locationScaleFactor
+   */
+  public void setLocationScaleFactor(double locationScaleFactor) {
+    _locationScaleFactor = locationScaleFactor;
   }
 
   @Override
@@ -243,10 +257,6 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     fireElement(element, handler);
   }
 
-  private double _minX = Double.POSITIVE_INFINITY;
-
-  private double _maxX = Double.NEGATIVE_INFINITY;
-
   private Point2D.Double getLocation(String xValue, String yValue,
       boolean canStripSuffix) {
 
@@ -257,12 +267,9 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     Point2D.Double from = null;
 
     try {
-      double x = Long.parseLong(xValue) / 100;
-      double y = Long.parseLong(yValue) / 100;
+      double x = Long.parseLong(xValue) / _locationScaleFactor;
+      double y = Long.parseLong(yValue) / _locationScaleFactor;
       from = new Point2D.Double(x, y);
-      _minX = Math.min(_minX, x);
-      _maxX = Math.max(_maxX, x);
-      System.out.println(_minX + " " + _maxX);
     } catch (NumberFormatException ex) {
       throw new AtcoCifException("error parsing additional location: x="
           + xValue + " y=" + yValue + " at " + describeLineLocation());

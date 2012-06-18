@@ -49,6 +49,8 @@ public class AtcoCifToGtfsConverterMain {
   private static final String ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO = "pruneStopsWithNoLocationInfo";
 
   private static final String ARG_PRUNE_STOPS_WITH_PREFIX = "pruneStopsWithPrefix";
+  
+  private static final String ARG_LOCATION_SCALE_FACTOR = "locationScaleFactor";
 
   public static void main(String[] args) throws ParseException, IOException {
     AtcoCifToGtfsConverterMain m = new AtcoCifToGtfsConverterMain();
@@ -127,6 +129,10 @@ public class AtcoCifToGtfsConverterMain {
       }
     }
     converter.setPruneStopsWithNoLocationInfo(cli.hasOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO));
+    if( cli.hasOption(ARG_LOCATION_SCALE_FACTOR)) {
+      double locationScaleFactor = Double.parseDouble(cli.getOptionValue(ARG_LOCATION_SCALE_FACTOR));
+      converter.getParser().setLocationScaleFactor(locationScaleFactor);
+    }
 
     if (cli.hasOption(ARG_PRUNE_STOPS_WITH_PREFIX)) {
       Set<String> pruneStopsWithPrefixes = new HashSet<String>();
@@ -149,6 +155,7 @@ public class AtcoCifToGtfsConverterMain {
     options.addOption(ARG_VEHICLE_TYPE, true, "vehicle type");
     options.addOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO, false, "");
     options.addOption(ARG_PRUNE_STOPS_WITH_PREFIX, true, "");
+    options.addOption(ARG_LOCATION_SCALE_FACTOR, true, "");
   }
 
   private void usage() throws IOException {

@@ -47,11 +47,21 @@ java -jar onebusaway-uk-atco-cif-to-gtfs-converter.jar [args] atco_cif_input_pat
   
   * <<<--agencyPhone=...>>> - specify the agency phone used for the feed
   
+  []
+  
+  The following arguments can be used to control other aspects of the feed
+  conversion:
+  
   * <<<--vehicleType=...>>> - specify a default {{{https://developers.google.com/transit/gtfs/reference#routes_route_type_field}GTFS vehicle type}} for the feed 
   
   * <<<--pruneStopsWithNoLocationInfo>>> - prune stops with no location information
   
   * <<<--pruneStopsWithPrefix=prefix>>> - prune stops with the specified stop id prefix
+  
+  * <<<--locationScaleFactor=factor>>> - if the northing and easting values for
+  additional location (QB) records have been multiplied by some scale factor,
+  specify it here
+  
   []
 
   For the <<<--vehicleType>>> argument, you can specify a numeric

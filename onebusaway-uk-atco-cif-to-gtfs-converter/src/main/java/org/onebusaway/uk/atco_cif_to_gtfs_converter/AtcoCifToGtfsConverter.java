@@ -65,6 +65,8 @@ public class AtcoCifToGtfsConverter {
   private static Logger _log = LoggerFactory.getLogger(AtcoCifToGtfsConverter.class);
 
   private static final int MINUTES_IN_DAY = 24 * 60;
+  
+  private AtcoCifParser _parser = new AtcoCifParser();
 
   private File _inputPath;
 
@@ -111,6 +113,10 @@ public class AtcoCifToGtfsConverter {
   private int _prunedStopTimesCount = 0;
 
   private int _prunedTripsCount = 0;
+  
+  public AtcoCifParser getParser() {
+    return _parser;
+  }
 
   public void setInputPath(File inputPath) {
     _inputPath = inputPath;
@@ -169,12 +175,11 @@ public class AtcoCifToGtfsConverter {
       _log.error("No applicable input files were found!");
       System.exit(-1);
     }
-
-    AtcoCifParser parser = new AtcoCifParser();
+    
     HandlerImpl handler = new HandlerImpl();
     for (File path : paths) {
       _log.info("parsing file: " + path);
-      parser.parse(path, handler);
+      _parser.parse(path, handler);
     }
 
     constructGtfs();
