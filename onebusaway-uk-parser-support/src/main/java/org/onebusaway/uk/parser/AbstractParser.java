@@ -44,10 +44,22 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
 
   private int _elementTypeKeySize = 2;
 
+  private String _ignoreElementTypeWithPrefix = null;
+
   public void parse(File path, ContentHandler handler) throws IOException {
     BufferedReader reader = new BufferedReader(new InputStreamReader(
         new FileInputStream(path), "UTF-8"));
     parse(path.getAbsolutePath(), reader, handler);
+  }
+
+  /**
+   * If an elementType value has the specified prefix, the element will be
+   * ignored.
+   * 
+   * @param prefix
+   */
+  public void setIgnoreElementTypeWithPrefix(String prefix) {
+    _ignoreElementTypeWithPrefix = prefix;
   }
 
   public void parse(String path, BufferedReader reader, ContentHandler handler)
@@ -93,6 +105,9 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
 
   protected boolean parseLine(ContentHandler handler) {
     ElementType type = parseElementTypeForLine();
+    if (type == null) {
+      return true;
+    }
     return handleRecordType(type, handler);
   }
 
@@ -102,6 +117,10 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
 
   protected ElementType parseElementTypeForLine() {
     String typeValue = pop(_elementTypeKeySize);
+    if (_ignoreElementTypeWithPrefix != null
+        && typeValue.startsWith(_ignoreElementTypeWithPrefix)) {
+      return null;
+    }
     ElementType type = _typesByKey.get(typeValue);
     if (type == null) {
       throw new ParserException("unknown record type: " + typeValue + " at "

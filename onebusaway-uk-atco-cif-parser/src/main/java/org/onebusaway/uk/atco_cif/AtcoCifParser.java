@@ -70,8 +70,7 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     _typesByKey.put("QJ", AtcoCifElement.Type.UNKNOWN);
     _typesByKey.put("QD", AtcoCifElement.Type.ROUTE_DESCRIPTION);
     _typesByKey.put("QY", AtcoCifElement.Type.UNKNOWN);
-    _typesByKey.put("ZM", AtcoCifElement.Type.UNKNOWN);
-    _typesByKey.put("ZS", AtcoCifElement.Type.UNKNOWN);
+    setIgnoreElementTypeWithPrefix("Z");
 
     Calendar c = Calendar.getInstance();
     c.add(Calendar.YEAR, 2);
