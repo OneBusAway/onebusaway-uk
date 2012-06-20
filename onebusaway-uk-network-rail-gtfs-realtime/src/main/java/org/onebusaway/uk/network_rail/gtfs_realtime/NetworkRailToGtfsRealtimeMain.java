@@ -15,13 +15,10 @@
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.net.URL;
-import java.util.Date;
 import java.util.HashSet;
 import java.util.Set;
 
@@ -57,17 +54,21 @@ public class NetworkRailToGtfsRealtimeMain {
 
   private static final String ARG_LOG_PATH = "logPath";
 
+  private static final String ARG_REPLAY_LOGS = "replayLogs";
+
+  private static final String ARG_STATE_PATH = "statePath";
+
   private static final String ARG_TRIP_UPDATES_PATH = "tripUpdatesPath";
 
   private static final String ARG_TRIP_UPDATES_URL = "tripUpdatesUrl";
 
   private NetworkRailGtfsRealtimeService _service;
 
+  private LoggingService _loggingService;
+
   private LifecycleService _lifecycleService;
 
   private StompConnection _connection = new StompConnection();
-
-  private String _logPath = null;
 
   public static void main(String[] args) throws Exception {
     NetworkRailToGtfsRealtimeMain m = new NetworkRailToGtfsRealtimeMain();
@@ -77,6 +78,11 @@ public class NetworkRailToGtfsRealtimeMain {
   @Inject
   public void setService(NetworkRailGtfsRealtimeService service) {
     _service = service;
+  }
+
+  @Inject
+  public void setLoggingService(LoggingService loggingService) {
+    _loggingService = loggingService;
   }
 
   @Inject
@@ -104,7 +110,12 @@ public class NetworkRailToGtfsRealtimeMain {
         cli.getOptionValue(ARG_ATOC_TIMETABLE_PATH)));
 
     if (cli.hasOption(ARG_LOG_PATH)) {
-      _logPath = cli.getOptionValue(ARG_LOG_PATH);
+      _loggingService.setLogPath(cli.getOptionValue(ARG_LOG_PATH));
+    }
+    _loggingService.setReplayLogs(cli.hasOption(ARG_REPLAY_LOGS));
+
+    if (cli.hasOption(ARG_STATE_PATH)) {
+      _service.setStatePath(new File(cli.getOptionValue(ARG_STATE_PATH)));
     }
 
     if (cli.hasOption(ARG_TRIP_UPDATES_PATH)) {
@@ -133,6 +144,8 @@ public class NetworkRailToGtfsRealtimeMain {
     options.addOption(ARG_PASSWORD, true, "password");
     options.addOption(ARG_ATOC_TIMETABLE_PATH, true, "atoc timetable path");
     options.addOption(ARG_LOG_PATH, true, "log path");
+    options.addOption(ARG_REPLAY_LOGS, false, "replay log");
+    options.addOption(ARG_STATE_PATH, true, "state path");
     options.addOption(ARG_TRIP_UPDATES_PATH, true, "trip updates path");
     options.addOption(ARG_TRIP_UPDATES_URL, true, "trip updates url");
   }
@@ -162,18 +175,7 @@ public class NetworkRailToGtfsRealtimeMain {
 
       _connection.ack(message, "tx2");
 
-      // Is there a better
-      if (body.startsWith("[")) {
-        if (_logPath != null) {
-          File path = new File(String.format(_logPath, new Date()));
-          path.getParentFile().mkdirs();
-          BufferedWriter writer = new BufferedWriter(new FileWriter(path));
-          writer.write(body);
-          writer.close();
-        }
-
-        _service.processMessages(body);
-      }
+      _service.processMessages(body);
     }
   }
 
