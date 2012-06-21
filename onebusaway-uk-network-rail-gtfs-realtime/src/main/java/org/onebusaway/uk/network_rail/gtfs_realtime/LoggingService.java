@@ -50,6 +50,7 @@ public class LoggingService {
     if (_logPath == null || !_replayLogs) {
       return;
     }
+    _log.info("replaying logs");
     File path = new File(_logPath);
     while (path != null && path.getName().contains("%1")) {
       path = path.getParentFile();

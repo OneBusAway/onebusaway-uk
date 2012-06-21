@@ -33,6 +33,7 @@ import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
 import org.onebusaway.cli.Daemonizer;
 import org.onebusaway.guice.jsr250.LifecycleService;
+import org.onebusaway.status_exporter.StatusServletSource;
 import org.onebusway.gtfs_realtime.exporter.TripUpdatesFileWriter;
 import org.onebusway.gtfs_realtime.exporter.TripUpdatesServlet;
 import org.slf4j.Logger;
@@ -83,6 +84,11 @@ public class NetworkRailToGtfsRealtimeMain {
   @Inject
   public void setLoggingService(LoggingService loggingService) {
     _loggingService = loggingService;
+  }
+
+  @Inject
+  public void setStatusServletSource(StatusServletSource statusServletSource) {
+    // Noop, just here to make sure that status servlet is instantiated.
   }
 
   @Inject

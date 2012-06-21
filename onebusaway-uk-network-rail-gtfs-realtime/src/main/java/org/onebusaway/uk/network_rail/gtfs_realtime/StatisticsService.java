@@ -5,7 +5,12 @@ import java.util.Map;
 import java.util.SortedMap;
 import java.util.TreeMap;
 
-public class Statistics {
+import javax.inject.Singleton;
+
+import org.onebusaway.status_exporter.StatusProviderService;
+
+@Singleton
+public class StatisticsService implements StatusProviderService {
 
   private long _messageCount;
 
@@ -79,10 +84,6 @@ public class Statistics {
         _stateTranistionCounts.put(key, count);
       }
     }
-
-    if (_messageCount % 1000 == 0) {
-      print();
-    }
   }
 
   public void incrementUnknownCancelledTrainIdCount() {
@@ -109,31 +110,38 @@ public class Statistics {
     _unknownTrainUidCount++;
   }
 
-  private void print() {
-    System.out.println("========================================");
-    System.out.println("                  messages=" + _messageCount);
-    System.out.println("           unknownTrainUid=" + _unknownTrainUidCount);
-    System.out.println("            unknownTrainId=" + _unknownTrainIdCount);
-    System.out.println("   unknownCancelledTrainId="
-        + _unknownCancelledTrainIdCount);
-    System.out.println("  unknownReinstatedTrainId="
-        + _unknownReinstatedTrainIdCount);
-    System.out.println("            emptyLocStanox=" + _emptyLocStanoxCount);
-    System.out.println("             unknownStanox=" + _unknownStanoxCount);
-    System.out.println("      trainActivationCount=" + _trainActivationCount);
-    System.out.println("    trainCancellationCount=" + _trainCancellationCount);
-    System.out.println("        trainMovementCount=" + _trainMovementCount);
-    System.out.println("    unidentifiedTrainCount=" + _unidentifiedTrainCount);
-    System.out.println("   trainReinstatementCount=" + _trainReinstatementCount);
-    System.out.println("  trainChangeOfOriginCount="
-        + _trainChangeOfOriginCount);
-    System.out.println("trainChangeOfIdentityCount="
-        + _trainChangeOfIdentityCount);
-    System.out.println("trainChangeOfLocationCount="
-        + _trainChangeOfLocationCount);
+  /****
+   * {@link StatusProviderService} Interface
+   ****/
+
+  @Override
+  public void getStatus(Map<String, String> status) {
+    count("messageCount", _messageCount, status);
+    count("unknownTrainUidCount", _unknownTrainUidCount, status);
+    count("unknownTrainIdCount", _unknownTrainIdCount, status);
+    count("unknownCancelledTrainIdCount", _unknownCancelledTrainIdCount, status);
+    count("unknownReinstatedTrainIdCount", _unknownReinstatedTrainIdCount,
+        status);
+    count("emptyLocStanox", _emptyLocStanoxCount, status);
+    count("unknownStanox", _unknownStanoxCount, status);
+    count("trainActivationCount", _trainActivationCount, status);
+    count("trainCancellationCount", _trainCancellationCount, status);
+    count("trainMovementCount", _trainMovementCount, status);
+    count("trainMovementCount", _trainMovementCount, status);
+    count("unidentifiedTrainCount", _unidentifiedTrainCount, status);
+    count("trainReinstatementCount", _trainReinstatementCount, status);
+    count("trainChangeOfOriginCount", _trainChangeOfOriginCount, status);
+    count("trainChangeOfIdentityCount", _trainChangeOfIdentityCount, status);
+    count("trainChangeOfLocationCount", _trainChangeOfLocationCount, status);
 
     for (Map.Entry<String, Long> entry : _stateTranistionCounts.entrySet()) {
-      System.out.println(entry.getKey() + " = " + entry.getValue());
+      count("stateTransitions[" + entry.getKey() + "]", entry.getValue(),
+          status);
     }
+  }
+
+  private void count(String key, long count, Map<String, String> status) {
+    status.put("network_rail_gtfs_realtime.statistics." + key,
+        Long.toString(count));
   }
 }

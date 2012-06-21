@@ -32,6 +32,10 @@
     </dependency>
     <dependency>
       <groupId>org.onebusaway</groupId>
+      <artifactId>onebusaway-status-exporter</artifactId>
+    </dependency>
+    <dependency>
+      <groupId>org.onebusaway</groupId>
       <artifactId>onebusaway-guice-jsr250</artifactId>
       <version>1.0.2</version>
     </dependency>
@@ -61,7 +65,7 @@
   </dependencies>
 
   <build>
-    <finalName>onebusaway-uk-network-rail-gtfs-realtime</finalName> 
+    <finalName>onebusaway-uk-network-rail-gtfs-realtime</finalName>
     <plugins>
       <plugin>
         <artifactId>maven-shade-plugin</artifactId>
@@ -159,10 +163,12 @@
                 </mapping>
               </mappings>
               <postinstallScriptlet>
-                <script>chkconfig --add onebusaway-uk-network-rail-gtfs-realtime</script>
+                <script>chkconfig --add
+                  onebusaway-uk-network-rail-gtfs-realtime</script>
               </postinstallScriptlet>
               <preremoveScriptlet>
-                <script>chkconfig --del onebusaway-uk-network-rail-gtfs-realtime</script>
+                <script>chkconfig --del
+                  onebusaway-uk-network-rail-gtfs-realtime</script>
               </preremoveScriptlet>
             </configuration>
           </plugin>

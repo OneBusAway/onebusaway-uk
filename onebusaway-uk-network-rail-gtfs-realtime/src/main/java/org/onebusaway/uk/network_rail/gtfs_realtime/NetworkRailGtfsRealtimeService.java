@@ -23,7 +23,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -36,6 +39,7 @@ import javax.xml.bind.JAXBContext;
 import javax.xml.bind.JAXBException;
 import javax.xml.bind.Unmarshaller;
 
+import org.onebusaway.status_exporter.StatusProviderService;
 import org.onebusaway.uk.atoc.timetable_parser.StationElement;
 import org.onebusaway.uk.atoc.timetable_parser.TimetableBundle;
 import org.onebusaway.uk.network_rail.cif.BasicScheduleElement;
@@ -63,13 +67,18 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import com.google.transit.realtime.GtfsRealtime.VehicleDescriptor;
 
 @Singleton
-public class NetworkRailGtfsRealtimeService {
+public class NetworkRailGtfsRealtimeService implements StatusProviderService {
 
   private static final Logger _log = LoggerFactory.getLogger(NetworkRailGtfsRealtimeService.class);
+
+  private static final DateFormat _dateFormat = new SimpleDateFormat(
+      "yyyy-MM-dd_HH-mm-ss");
 
   private Gson _gson;
 
   private GtfsRealtimeMutableProvider _gtfsRealtimeProvider;
+
+  private StatisticsService _statisticsService;
 
   private LoggingService _loggingService;
 
@@ -82,8 +91,6 @@ public class NetworkRailGtfsRealtimeService {
   private Map<String, TrainInstance> _trainsById = new HashMap<String, TrainInstance>();
 
   private long _mostRecentTimestamp = 0;
-
-  private Statistics _statistics = new Statistics();
 
   private File _atocTimetablePath;
 
@@ -108,6 +115,11 @@ public class NetworkRailGtfsRealtimeService {
   @Inject
   public void setGtfsRealtimeProvider(GtfsRealtimeMutableProvider provider) {
     _gtfsRealtimeProvider = provider;
+  }
+
+  @Inject
+  public void setStatisticsService(StatisticsService statisticsService) {
+    _statisticsService = statisticsService;
   }
 
   @Inject
@@ -158,6 +170,8 @@ public class NetworkRailGtfsRealtimeService {
     _loggingService.replayLogs();
     _inReplay = false;
     updateFeeds();
+
+    _log.info("startup complete");
   }
 
   public void processMessages(String jsonMessage) throws IOException {
@@ -176,12 +190,32 @@ public class NetworkRailGtfsRealtimeService {
     saveState();
   }
 
+  /****
+   * {@link StatusProviderService} Interface
+   * 
+   * @param message
+   */
+
+  @Override
+  public void getStatus(Map<String, String> status) {
+    status.put("network_rail_gtfs_realtime.activeTrains",
+        Integer.toString(_trainsById.size()));
+    if (_mostRecentTimestamp != 0) {
+      status.put("network_rail_gtfs_realtime.mostRecentTimestamp",
+          _dateFormat.format(new Date(_mostRecentTimestamp)));
+    }
+  }
+
+  /****
+   * Private Methods
+   ****/
+
   private void processMessage(Message message) {
 
     ETrainMovementMessageType msgType = ETrainMovementMessageType.getTypeForCode(Integer.parseInt(message.getHeader().getMsgType()));
 
     String trainId = message.getBody().getTrainId();
-    _statistics.incrementMessage(msgType, trainId);
+    _statisticsService.incrementMessage(msgType, trainId);
 
     _mostRecentTimestamp = Long.parseLong(message.getHeader().getMsgQueueTimestamp());
 
@@ -242,7 +276,7 @@ public class NetworkRailGtfsRealtimeService {
   private void handleCancellation(Message message) {
     TrainInstance instance = getTrainInstanceForTrainId(message);
     if (instance == null) {
-      _statistics.incrementUnknownCancelledTrainIdCount();
+      _statisticsService.incrementUnknownCancelledTrainIdCount();
       return;
     } else {
       /**
@@ -258,16 +292,16 @@ public class NetworkRailGtfsRealtimeService {
     Body body = message.getBody();
     TrainInstance instance = getTrainInstanceForTrainId(message);
     if (instance == null) {
-      _statistics.incrementUnknownTrainIdCount();
+      _statisticsService.incrementUnknownTrainIdCount();
       return;
     }
     if (body.getLocStanox() == null) {
-      _statistics.incrementEmptyLocStanoxCount();
+      _statisticsService.incrementEmptyLocStanoxCount();
     }
     int stanox = Integer.parseInt(body.getLocStanox());
     TimepointElement timepoint = instance.getTimepointForStanox(stanox);
     if (timepoint == null) {
-      _statistics.incrementUnknownStanoxCount();
+      _statisticsService.incrementUnknownStanoxCount();
       return;
     }
 
@@ -297,7 +331,7 @@ public class NetworkRailGtfsRealtimeService {
   private void handleReinstatement(Message message) {
     TrainInstance instance = getTrainInstanceForTrainId(message);
     if (instance == null) {
-      _statistics.incrementUnknownReinstatedTrainIdCount();
+      _statisticsService.incrementUnknownReinstatedTrainIdCount();
       return;
     } else {
 
@@ -339,7 +373,7 @@ public class NetworkRailGtfsRealtimeService {
   private BasicScheduleElement getBestScheduleForTrainUid(String trainUid) {
     BasicScheduleElement schedule = _schedulesByTrainUid.get(trainUid);
     if (schedule == null) {
-      _statistics.incrementUnknownTrainUidCount();
+      _statisticsService.incrementUnknownTrainUidCount();
     }
     return schedule;
   }
@@ -350,7 +384,7 @@ public class NetworkRailGtfsRealtimeService {
     if (trainId == null) {
       return null;
     }
-    TrainInstance instance = _trainsById.get(message);
+    TrainInstance instance = _trainsById.get(trainId);
     if (instance != null) {
       instance.setLastUpdateTime(Long.parseLong(message.getHeader().getMsgQueueTimestamp()));
     }
@@ -427,6 +461,7 @@ public class NetworkRailGtfsRealtimeService {
     if (_statePath == null || !_statePath.exists()) {
       return;
     }
+    _log.info("reloading state");
     ObjectInputStream in = new ObjectInputStream(new BufferedInputStream(
         new FileInputStream(_statePath)));
 
@@ -486,5 +521,4 @@ public class NetworkRailGtfsRealtimeService {
       }
     }
   }
-
 }
