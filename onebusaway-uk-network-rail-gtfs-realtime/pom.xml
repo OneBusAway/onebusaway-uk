@@ -32,7 +32,7 @@
     </dependency>
     <dependency>
       <groupId>org.onebusaway</groupId>
-      <artifactId>onebusaway-status-exporter</artifactId>
+      <artifactId>onebusaway-status-jetty-exporter</artifactId>
     </dependency>
     <dependency>
       <groupId>org.onebusaway</groupId>

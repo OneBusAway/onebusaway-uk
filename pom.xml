@@ -57,7 +57,7 @@
       </dependency>
       <dependency>
         <groupId>org.onebusaway</groupId>
-        <artifactId>onebusaway-status-exporter</artifactId>
+        <artifactId>onebusaway-status-jetty-exporter</artifactId>
         <version>1.0.0-SNAPSHOT</version>
       </dependency>
       <dependency>

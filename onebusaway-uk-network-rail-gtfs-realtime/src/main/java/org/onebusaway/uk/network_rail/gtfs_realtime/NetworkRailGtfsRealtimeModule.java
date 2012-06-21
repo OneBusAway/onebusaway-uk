@@ -18,7 +18,7 @@ package org.onebusaway.uk.network_rail.gtfs_realtime;
 import java.util.Set;
 
 import org.onebusaway.guice.jsr250.JSR250Module;
-import org.onebusaway.status_exporter.StatusExporterModule;
+import org.onebusaway.status_exporter.StatusJettyExporterModule;
 import org.onebusway.gtfs_realtime.exporter.GtfsRealtimeExporterModule;
 
 import com.google.inject.AbstractModule;
@@ -29,7 +29,7 @@ public class NetworkRailGtfsRealtimeModule extends AbstractModule {
   public static void addModuleAndDependencies(Set<Module> modules) {
     modules.add(new NetworkRailGtfsRealtimeModule());
     GtfsRealtimeExporterModule.addModuleAndDependencies(modules);
-    StatusExporterModule.addModuleAndDependencies(modules);
+    StatusJettyExporterModule.addModuleAndDependencies(modules);
     JSR250Module.addModuleAndDependencies(modules);
   }
 
