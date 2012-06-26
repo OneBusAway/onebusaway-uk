@@ -1,0 +1,175 @@
+onebusaway-uk-network-rail-gtfs-realtime
+
+  We provide a utility for converting the realtime train arrival and departure
+  information made available by Network Rail in the UK into the
+  {{{https://developers.google.com/transit/gtfs-realtime/}GTFS-realtime}}
+  format.
+  
+  #set( $url = 'http://nexus.onebusaway.org/service/local/artifact/maven/content?r=public&g=org.onebusaway&a=onebusaway-uk-network-rail-gtfs-realtime&v=' + ${currentVersion} )
+
+  Details on all releases can be found in the {{{./release-notes.html}Release Notes}}.  
+  
+  <<Download Current Version:>> {{{${url}}onebusaway-uk-network-rail-gtfs-realtime-${currentVersion}.jar}}
+  
+  Also check out the {{{RPM__Linux_Service}RPM + Linux Service}}.
+
+* Running the Utility
+
+  You need {{{http://java.com/}Java}} installed to run the converter utility.
+  
++---+
+java -jar onebusaway-uk-network-rail-gtfs-realtime.jar [--args]
++---+
+
+  When the application is running correctly, you should now have access to a
+GTFS-realtime feed of trip updates for Network Rail trains.  If you had
+configured the application to share a GTFS-realtime url (eg.
+<<<--tripUpdatesUrl=http://localhost:8080/trip-updates>>>), you should be
+able to access the binary feed at:
+
+  {{{http://localhost:8080/trip-updates}http://localhost:8080/trip-updates}}
+
+  You can see a human-readable version of the feed by using the following URL:
+
+  {{{http://localhost:8080/trip-updates?debug}http://localhost:8080/trip-updates?debug}}
+
+  Finally, you can see runtime statistics for the application at:
+
+  {{{http://localhost:8080/status}http://localhost:8080/status}}
+
+  <<Note:>> The feed may appear initially empty.  Before an entry for a train
+will appear in the feed, we must receive first an activation message and then
+a movement message for the train.  That process can take up to an hour.  To
+avoid losing train state when restarting the application, check out the
+<<<--statePath>>> argument described below. 
+
+* Arguments
+
+  The program requires the following arguments:
+  
+  * <<<--username=...>>> - your Network Rail username.
+  
+  * <<<--password=...>>> - your Network Rail password.
+  
+  * <<<--atocTimetablePath=...>>> - directory containing ATOC timetable and
+    station data.
+  
+  []
+  
+  You must also specify at least one of the following:
+  
+  * <<<--tripUpdatesUrl=...>>> - URL where the GTFS-realtime trip updates feed
+    will be made avaiable (eg. http://localhost:8080/trip-updates) 
+  
+  * <<<--tripUpdatesPath=...>>> - path where the GTFS-realtime trip updates feed
+    will be written
+  
+  []
+
+  The following optional arguments can be used to additionally control how the
+  application functions:
+
+  * <<<--statePath=...>>> - path where application and current train states will
+  be written, useful for making sure train activation messages are not lost
+  during an application restart.
+  
+  * <<<--logPath=...>>> - path where raw JSON messages from the Network Rail
+    realtime feed will be written.  The path is automatically expanded using
+    the current time so you can use Java's built-in time formatting instructions
+    to construct the path (eg. <<<logs/%1$tF/%1$tH/%1$tT.%1$tL.json>>>)
+  
+  []
+  
+  The application also optionally supports daemonization on supported platforms.
+  
+  * <<<--daemonize>>> - Request that the application daemonize.
+  
+  * <<<--pidFile=...>>> - The PID of the application will be written to the
+    specified path on daemonization.
+  
+  * <<<--outputFile=...> - Standard output from the application will be written
+    to the specified file.  If <<<&2>>> is specified, output will be written
+    to the error log file instead.
+  
+  * <<<--errorFile=...>>> - Standard error from the application will be written
+    to the specified file.  If <<<&1>>> is specified, errors will be written
+    to the output log file instead.
+    
+{RPM + Linux Service}
+
+  We also provide an RPM package of Network Rail GTFS-realtime application.  The
+package should make it easy to deploy the application as a service on a Linux
+server.
+  
+* Downloading the RPM
+
+  You can download the latest RPM here:
+
+#set( $rpm_url = 'http://nexus.onebusaway.org/service/local/artifact/maven/content?r=public&g=org.onebusaway&a=onebusaway-uk-network-rail-gtfs-realtime&c=rpm&p=zip&v=' + ${currentVersion} )
+  
+  * {{{${rpm_url}}onebusaway-uk-network-rail-gtfs-realtime-${currentVersion}-rpm.zip}}
+  
+  []
+  
+  <<Note:>> For complicated reasons, we offer a ZIP file download containing the RPM.  Extract the ZIP to get at the rpm inside.
+
+* Installing the RPM
+
+  Install the RPM like you would any other:
+  
++---+
+rpm -i onebusaway-uk-network-rail-gtfs-realtime-VERSION.noarch.rpm
++---+
+
+  Note that you typically need to be root to install an RPM.
+
+* Configuring the Application
+  
+  The primary configuration file for the repeater is:
+  
++---+
+/etc/onebusaway-uk-network-rail-gtfs-realtime/onebusaway-uk-network-rail-gtfs-realtime.conf
++---+
+
+  The file will contain a couple of options by default.  The one you are most
+concerned with are:
+
++---+  
+USERNAME="your Network Rail username"
+PASSWORD="your Network Rail password"
+ATOC_TIMETABLE_PATH="directory containing ATOC timetable and station data"
+APPLICATION_ARGS="additional args to pass to the application"
+JVM_ARGS="additional args to pass to the Java Virtual Machine"
++---+
+
+  <<<APPLICATION_ARGS>>> accepts the same command-line arguments as the
+stand-alone <<<onebusaway-uk-network-rail-gtfs-realtime>>> application.
+
+* Starting and Stopping the Service
+
+  You can use standard init.d scripts to start and stop the
+<<<onebusaway-uk-network-rail-gtfs-realtime>>> daemon:
+  
++---+
+/etc/init.d/onebusaway-uk-network-rail-gtfs-realtime {start|stop|restart|status}
++---+
+
+  You can also use the built-in <<<service>>> command to start and stop the service as well:
+
++---+
+service onebusaway-uk-network-rail-gtfs-realtime {start|stop|restart|status}
++---+
+
+  You can also control how the service is started on boot using the <<<chkconfig>>> command. 
+ 
+* Logging
+
+  By default, the <<<onebusaway-uk-network-rail-gtfs-realtime>>> daemon logs to
+the following location:
+  
++---+
+/var/log/onebusaway-uk-network-rail-gtfs-realtime/onebusaway-uk-network-rail-gtfs-realtime.log
++---+ 
+
+    
+   
