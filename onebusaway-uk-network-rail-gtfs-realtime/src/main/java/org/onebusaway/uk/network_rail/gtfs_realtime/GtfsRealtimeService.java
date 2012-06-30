@@ -45,6 +45,7 @@ import org.onebusaway.uk.atoc.timetable_parser.TimetableBundle;
 import org.onebusaway.uk.network_rail.cif.BasicScheduleElement;
 import org.onebusaway.uk.network_rail.cif.TimepointElement;
 import org.onebusaway.uk.network_rail.cif.TiplocInsertElement;
+import org.onebusaway.uk.network_rail.gtfs_realtime.model.TrainDescriberMessage;
 import org.onebusaway.uk.network_rail.gtfs_realtime.model.TrainMovementBody;
 import org.onebusaway.uk.network_rail.gtfs_realtime.model.TrainMovementMessage;
 import org.onebusaway.uk.network_rail.gtfs_realtime.model.TrainState;
@@ -179,7 +180,7 @@ public class GtfsRealtimeService implements StatusProviderService {
         break;
       }
       case TD: {
-
+        _gson.fromJson(jsonMessage, TrainDescriberMessage[].class);
       }
     }
 
