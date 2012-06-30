@@ -16,17 +16,12 @@
 package org.onebusaway.uk.network_rail.gtfs_realtime;
 
 import java.io.File;
-import java.io.IOException;
-import java.net.SocketTimeoutException;
 import java.net.URL;
 import java.util.HashSet;
 import java.util.Set;
 
 import javax.inject.Inject;
 
-import org.apache.activemq.transport.stomp.Stomp.Headers.Subscribe;
-import org.apache.activemq.transport.stomp.StompConnection;
-import org.apache.activemq.transport.stomp.StompFrame;
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.Parser;
@@ -36,16 +31,12 @@ import org.onebusaway.guice.jsr250.LifecycleService;
 import org.onebusaway.status_exporter.StatusServletSource;
 import org.onebusway.gtfs_realtime.exporter.TripUpdatesFileWriter;
 import org.onebusway.gtfs_realtime.exporter.TripUpdatesServlet;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import com.google.inject.Guice;
 import com.google.inject.Injector;
 import com.google.inject.Module;
 
 public class NetworkRailToGtfsRealtimeMain {
-
-  private static final Logger _log = LoggerFactory.getLogger(NetworkRailToGtfsRealtimeMain.class);
 
   private static final String ARG_USERNAME = "username";
 
@@ -63,13 +54,13 @@ public class NetworkRailToGtfsRealtimeMain {
 
   private static final String ARG_TRIP_UPDATES_URL = "tripUpdatesUrl";
 
-  private NetworkRailGtfsRealtimeService _service;
+  private MessageListenerService _messageListenerService;
+
+  private GtfsRealtimeService _gtfsRealtimeService;
 
   private LoggingService _loggingService;
 
   private LifecycleService _lifecycleService;
-
-  private StompConnection _connection = new StompConnection();
 
   public static void main(String[] args) throws Exception {
     NetworkRailToGtfsRealtimeMain m = new NetworkRailToGtfsRealtimeMain();
@@ -77,8 +68,14 @@ public class NetworkRailToGtfsRealtimeMain {
   }
 
   @Inject
-  public void setService(NetworkRailGtfsRealtimeService service) {
-    _service = service;
+  public void setMessageListenerService(
+      MessageListenerService messageListenerService) {
+    _messageListenerService = messageListenerService;
+  }
+
+  @Inject
+  public void setGtfsRealtimeService(GtfsRealtimeService gtfsRealtimeService) {
+    _gtfsRealtimeService = gtfsRealtimeService;
   }
 
   @Inject
@@ -112,7 +109,10 @@ public class NetworkRailToGtfsRealtimeMain {
     Injector injector = Guice.createInjector(modules);
     injector.injectMembers(this);
 
-    _service.setAtocTimetablePath(new File(
+    _messageListenerService.setUsername(cli.getOptionValue(ARG_USERNAME));
+    _messageListenerService.setPassword(cli.getOptionValue(ARG_PASSWORD));
+
+    _gtfsRealtimeService.setAtocTimetablePath(new File(
         cli.getOptionValue(ARG_ATOC_TIMETABLE_PATH)));
 
     if (cli.hasOption(ARG_LOG_PATH)) {
@@ -121,7 +121,8 @@ public class NetworkRailToGtfsRealtimeMain {
     _loggingService.setReplayLogs(cli.hasOption(ARG_REPLAY_LOGS));
 
     if (cli.hasOption(ARG_STATE_PATH)) {
-      _service.setStatePath(new File(cli.getOptionValue(ARG_STATE_PATH)));
+      _gtfsRealtimeService.setStatePath(new File(
+          cli.getOptionValue(ARG_STATE_PATH)));
     }
 
     if (cli.hasOption(ARG_TRIP_UPDATES_PATH)) {
@@ -134,15 +135,6 @@ public class NetworkRailToGtfsRealtimeMain {
     }
 
     _lifecycleService.start();
-
-    try {
-      connect(cli);
-      proccessData();
-    } catch (Exception ex) {
-      _log.error("error processing", ex);
-    }
-
-    disconnect();
   }
 
   private void buildOptions(Options options) {
@@ -155,45 +147,4 @@ public class NetworkRailToGtfsRealtimeMain {
     options.addOption(ARG_TRIP_UPDATES_PATH, true, "trip updates path");
     options.addOption(ARG_TRIP_UPDATES_URL, true, "trip updates url");
   }
-
-  private void connect(CommandLine cli) throws Exception {
-
-    _connection.open("datafeeds.networkrail.co.uk", 61618);
-    _connection.connect(cli.getOptionValue(ARG_USERNAME),
-        cli.getOptionValue(ARG_PASSWORD));
-
-    _connection.subscribe("/topic/TRAIN_MVT_ALL_TOC",
-        Subscribe.AckModeValues.CLIENT);
-    _connection.begin("tx2");
-  }
-
-  private void proccessData() throws Exception, IOException {
-    while (true) {
-      StompFrame message = null;
-      try {
-        message = _connection.receive();
-      } catch (SocketTimeoutException ex) {
-        _log.warn("timeout");
-        continue;
-      }
-
-      String body = message.getBody();
-
-      _connection.ack(message, "tx2");
-
-      _service.processMessages(body);
-    }
-  }
-
-  private void disconnect() {
-    if (_connection != null) {
-      try {
-        _connection.disconnect();
-        _connection = null;
-      } catch (Exception ex) {
-        _log.error("error disconnecting", ex);
-      }
-    }
-  }
-
 }

@@ -45,8 +45,8 @@ import org.onebusaway.uk.atoc.timetable_parser.TimetableBundle;
 import org.onebusaway.uk.network_rail.cif.BasicScheduleElement;
 import org.onebusaway.uk.network_rail.cif.TimepointElement;
 import org.onebusaway.uk.network_rail.cif.TiplocInsertElement;
-import org.onebusaway.uk.network_rail.gtfs_realtime.model.Body;
-import org.onebusaway.uk.network_rail.gtfs_realtime.model.Message;
+import org.onebusaway.uk.network_rail.gtfs_realtime.model.TrainMovementBody;
+import org.onebusaway.uk.network_rail.gtfs_realtime.model.TrainMovementMessage;
 import org.onebusaway.uk.network_rail.gtfs_realtime.model.TrainState;
 import org.onebusaway.uk.parser.DefaultContentHandler;
 import org.onebusaway.uk.parser.Element;
@@ -67,9 +67,9 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import com.google.transit.realtime.GtfsRealtime.VehicleDescriptor;
 
 @Singleton
-public class NetworkRailGtfsRealtimeService implements StatusProviderService {
+public class GtfsRealtimeService implements StatusProviderService {
 
-  private static final Logger _log = LoggerFactory.getLogger(NetworkRailGtfsRealtimeService.class);
+  private static final Logger _log = LoggerFactory.getLogger(GtfsRealtimeService.class);
 
   private static final DateFormat _dateFormat = new SimpleDateFormat(
       "yyyy-MM-dd_HH-mm-ss");
@@ -79,8 +79,6 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
   private GtfsRealtimeMutableProvider _gtfsRealtimeProvider;
 
   private StatisticsService _statisticsService;
-
-  private LoggingService _loggingService;
 
   private Map<String, StationElement> _stationsByTiploc = new HashMap<String, StationElement>();
 
@@ -107,7 +105,7 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
    */
   private int _trainExpirationTimeInSeconds = 60 * 60;
 
-  public NetworkRailGtfsRealtimeService() {
+  public GtfsRealtimeService() {
     _gson = new GsonBuilder().setFieldNamingPolicy(
         FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
   }
@@ -120,11 +118,6 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
   @Inject
   public void setStatisticsService(StatisticsService statisticsService) {
     _statisticsService = statisticsService;
-  }
-
-  @Inject
-  public void setLoggingService(LoggingService loggingService) {
-    _loggingService = loggingService;
   }
 
   public void setAtocTimetablePath(File atocTimetablePath) {
@@ -166,25 +159,30 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
       reloadState();
     }
 
-    _inReplay = true;
-    _loggingService.replayLogs();
-    _inReplay = false;
     updateFeeds();
 
     _log.info("startup complete");
   }
 
-  public void processMessages(String jsonMessage) throws IOException {
+  public void processMessages(EMessageType messageType, String jsonMessage)
+      throws IOException {
     if (!jsonMessage.startsWith("[")) {
       return;
     }
-    if (!_inReplay) {
-      _loggingService.logMessage(jsonMessage);
+    switch (messageType) {
+      case TRAIN_MOVEMENT: {
+        TrainMovementMessage[] messages = _gson.fromJson(jsonMessage,
+            TrainMovementMessage[].class);
+        for (TrainMovementMessage message : messages) {
+          processMessage(message);
+        }
+        break;
+      }
+      case TD: {
+
+      }
     }
-    Message[] messages = _gson.fromJson(jsonMessage, Message[].class);
-    for (Message message : messages) {
-      processMessage(message);
-    }
+
     removeExpiredTrains();
     updateFeeds();
     saveState();
@@ -210,7 +208,7 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
    * Private Methods
    ****/
 
-  private void processMessage(Message message) {
+  private void processMessage(TrainMovementMessage message) {
 
     ETrainMovementMessageType msgType = ETrainMovementMessageType.getTypeForCode(Integer.parseInt(message.getHeader().getMsgType()));
 
@@ -247,8 +245,8 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     }
   }
 
-  private void handleActivation(Message message) {
-    Body body = message.getBody();
+  private void handleActivation(TrainMovementMessage message) {
+    TrainMovementBody body = message.getBody();
     BasicScheduleElement schedule = getBestScheduleForTrainUid(body.getTrainUid());
     if (schedule == null) {
       return;
@@ -273,7 +271,7 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     }
   }
 
-  private void handleCancellation(Message message) {
+  private void handleCancellation(TrainMovementMessage message) {
     TrainInstance instance = getTrainInstanceForTrainId(message);
     if (instance == null) {
       _statisticsService.incrementUnknownCancelledTrainIdCount();
@@ -288,8 +286,8 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     }
   }
 
-  private void handleMovement(Message message) {
-    Body body = message.getBody();
+  private void handleMovement(TrainMovementMessage message) {
+    TrainMovementBody body = message.getBody();
     TrainInstance instance = getTrainInstanceForTrainId(message);
     if (instance == null) {
       _statisticsService.incrementUnknownTrainIdCount();
@@ -303,6 +301,13 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     if (timepoint == null) {
       _statisticsService.incrementUnknownStanoxCount();
       return;
+    }
+
+    if (body.getPlatform() != null) {
+      String platform = body.getPlatform().trim();
+      if (!platform.isEmpty() && !platform.equals(timepoint.getPlatform())) {
+        _statisticsService.incrementPlatformChange();
+      }
     }
 
     if (body.getActualTimestamp().isEmpty()
@@ -324,11 +329,11 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     instance.setStopTimeUpdate(stopTimeUpdate.build());
   }
 
-  private void handleUnidentifiedTrain(Message message) {
+  private void handleUnidentifiedTrain(TrainMovementMessage message) {
 
   }
 
-  private void handleReinstatement(Message message) {
+  private void handleReinstatement(TrainMovementMessage message) {
     TrainInstance instance = getTrainInstanceForTrainId(message);
     if (instance == null) {
       _statisticsService.incrementUnknownReinstatedTrainIdCount();
@@ -338,7 +343,7 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     }
   }
 
-  private void handleChangeOfOrigin(Message message) {
+  private void handleChangeOfOrigin(TrainMovementMessage message) {
     /**
      * I'm not sure what this means in practice.
      */
@@ -348,11 +353,11 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     }
   }
 
-  private void handleChangleOfIdentity(Message message) {
+  private void handleChangleOfIdentity(TrainMovementMessage message) {
     /**
      * Theoretically, we should
      */
-    Body body = message.getBody();
+    TrainMovementBody body = message.getBody();
     String trainId = body.getTrainId();
     String revisedTrainId = body.getRevisedTrainId();
     if (!trainId.equals(revisedTrainId)) {
@@ -364,7 +369,7 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     }
   }
 
-  private void handleChangeOfLocation(Message message) {
+  private void handleChangeOfLocation(TrainMovementMessage message) {
     /**
      * I haven't seen one of these in live data yet.
      */
@@ -378,8 +383,8 @@ public class NetworkRailGtfsRealtimeService implements StatusProviderService {
     return schedule;
   }
 
-  private TrainInstance getTrainInstanceForTrainId(Message message) {
-    Body body = message.getBody();
+  private TrainInstance getTrainInstanceForTrainId(TrainMovementMessage message) {
+    TrainMovementBody body = message.getBody();
     String trainId = body.getTrainId();
     if (trainId == null) {
       return null;

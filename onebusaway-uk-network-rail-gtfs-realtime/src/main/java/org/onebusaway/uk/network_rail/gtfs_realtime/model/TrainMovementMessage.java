@@ -15,25 +15,25 @@
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime.model;
 
-public class Message {
+public class TrainMovementMessage {
 
-  private Header header = new Header();
+  private TrainMovementHeader header = new TrainMovementHeader();
 
-  private Body body = new Body();
+  private TrainMovementBody body = new TrainMovementBody();
 
-  public Header getHeader() {
+  public TrainMovementHeader getHeader() {
     return header;
   }
 
-  public void setHeader(Header header) {
+  public void setHeader(TrainMovementHeader header) {
     this.header = header;
   }
 
-  public Body getBody() {
+  public TrainMovementBody getBody() {
     return body;
   }
 
-  public void setBody(Body body) {
+  public void setBody(TrainMovementBody body) {
     this.body = body;
   }
 }

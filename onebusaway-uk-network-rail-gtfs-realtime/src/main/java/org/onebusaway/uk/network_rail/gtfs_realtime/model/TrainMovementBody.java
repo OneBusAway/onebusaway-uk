@@ -15,7 +15,7 @@
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime.model;
 
-public class Body {
+public class TrainMovementBody {
 
   private String actualTimestamp;
   private String autoExpected;

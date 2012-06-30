@@ -35,7 +35,7 @@ public class NetworkRailGtfsRealtimeModule extends AbstractModule {
 
   @Override
   protected void configure() {
-    bind(NetworkRailGtfsRealtimeService.class);
+    bind(GtfsRealtimeService.class);
     bind(StatisticsService.class);
     bind(LoggingService.class);
   }

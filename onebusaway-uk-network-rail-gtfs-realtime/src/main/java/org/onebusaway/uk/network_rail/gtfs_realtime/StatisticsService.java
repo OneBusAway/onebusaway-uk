@@ -57,6 +57,8 @@ public class StatisticsService implements StatusProviderService {
 
   private long _trainChangeOfLocationCount;
 
+  private long _platformChange;
+
   private Map<String, ETrainMovementMessageType> _prevState = new HashMap<String, ETrainMovementMessageType>();
 
   private SortedMap<String, Long> _stateTranistionCounts = new TreeMap<String, Long>();
@@ -125,6 +127,10 @@ public class StatisticsService implements StatusProviderService {
     _unknownTrainUidCount++;
   }
 
+  public void incrementPlatformChange() {
+    _platformChange++;
+  }
+
   /****
    * {@link StatusProviderService} Interface
    ****/
@@ -139,6 +145,8 @@ public class StatisticsService implements StatusProviderService {
         status);
     count("emptyLocStanox", _emptyLocStanoxCount, status);
     count("unknownStanox", _unknownStanoxCount, status);
+    count("platformChange", _platformChange, status);
+    
     count("trainActivationCount", _trainActivationCount, status);
     count("trainCancellationCount", _trainCancellationCount, status);
     count("trainMovementCount", _trainMovementCount, status);

@@ -15,7 +15,7 @@
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime.model;
 
-public class Header {
+public class TrainMovementHeader {
   private String msgType;
 
   private String sourceDevId;

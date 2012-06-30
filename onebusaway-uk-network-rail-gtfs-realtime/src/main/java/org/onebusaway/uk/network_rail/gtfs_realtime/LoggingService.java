@@ -37,7 +37,7 @@ public class LoggingService {
 
   private static Logger _log = LoggerFactory.getLogger(LoggingService.class);
 
-  private NetworkRailGtfsRealtimeService _networkRailGtfsRealtimeService;
+  private GtfsRealtimeService _networkRailGtfsRealtimeService;
 
   private String _logPath;
 
@@ -47,9 +47,11 @@ public class LoggingService {
    */
   private boolean _replayLogs = false;
 
+  private int _logHistoryInDays = 10;
+
   @Inject
   public void setNetworkRailGtfsRealtimeService(
-      NetworkRailGtfsRealtimeService networkRailGtfsRealtimeService) {
+      GtfsRealtimeService networkRailGtfsRealtimeService) {
     _networkRailGtfsRealtimeService = networkRailGtfsRealtimeService;
   }
 
@@ -74,25 +76,31 @@ public class LoggingService {
       return;
     }
     Calendar c = Calendar.getInstance();
-    c.add(Calendar.DAY_OF_MONTH, -1);
+    c.add(Calendar.DAY_OF_MONTH, -_logHistoryInDays);
     List<File> files = new ArrayList<File>();
     getRecentLogFiles(path, c.getTimeInMillis(), files);
     _log.info("replaying " + files.size() + " log files in " + path);
     for (File file : files) {
+      EMessageType messageType = getMessageTypeForFile(file);
+      if (messageType == null) {
+        _log.warn("could not determine message type for file " + file);
+        continue;
+      }
       BufferedReader reader = new BufferedReader(new FileReader(file));
       String line = null;
       while ((line = reader.readLine()) != null) {
-        _networkRailGtfsRealtimeService.processMessages(line);
+        _networkRailGtfsRealtimeService.processMessages(messageType, line);
       }
     }
+    _log.info("replay complete");
   }
 
-  public void logMessage(String jsonMessage) {
+  public void logMessage(EMessageType messageType, String jsonMessage) {
     if (_logPath == null) {
       return;
     }
 
-    File path = new File(String.format(_logPath, new Date()));
+    File path = getNextPath(messageType);
     path.getParentFile().mkdirs();
 
     BufferedWriter writer = null;
@@ -111,6 +119,29 @@ public class LoggingService {
         }
       }
     }
+  }
+
+  private File getNextPath(EMessageType messageType) {
+    File path = new File(String.format(_logPath, new Date()));
+    String name = path.getName();
+    int index = name.lastIndexOf('.');
+    if (index == -1) {
+      name = name + "-" + messageType;
+    } else {
+      name = name.substring(0, index) + "-" + messageType
+          + name.substring(index);
+    }
+    return new File(path.getParentFile(), name);
+  }
+
+  private EMessageType getMessageTypeForFile(File file) {
+    String name = file.getName();
+    for (EMessageType messageType : EMessageType.values()) {
+      if (name.contains(messageType.toString())) {
+        return messageType;
+      }
+    }
+    return null;
   }
 
   private void getRecentLogFiles(File logDir, long minLastModified,
