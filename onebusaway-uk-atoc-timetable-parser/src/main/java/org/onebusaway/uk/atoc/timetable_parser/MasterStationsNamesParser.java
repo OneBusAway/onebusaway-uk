@@ -15,10 +15,13 @@
  */
 package org.onebusaway.uk.atoc.timetable_parser;
 
+import java.awt.geom.Point2D;
+
 import org.onebusaway.uk.atoc.timetable_parser.StationElement.ECategory;
 import org.onebusaway.uk.parser.AbstractParser;
 import org.onebusaway.uk.parser.ContentHandler;
 import org.onebusaway.uk.parser.ParserException;
+import org.onebusaway.uk.parser.ProjectionSupport;
 
 public class MasterStationsNamesParser extends AbstractParser<EStationRowType> {
 
@@ -62,13 +65,19 @@ public class MasterStationsNamesParser extends AbstractParser<EStationRowType> {
     element.setSubsidiaryAlphaCode(pop(3));
     pop(3);
     element.setAlphaCode(pop(3));
-    double y = Double.parseDouble(pop(5)) * 100;
+    String rawEasting = pop(5);
     pop(1);
-    double x = Double.parseDouble(pop(5)) * 100;
+    String rawNorthing = pop(5);
+    
+    rawEasting = rawEasting.substring(1);
+    rawNorthing = rawNorthing.substring(1);
+    
+    double y = Double.parseDouble(rawNorthing) * 100;
+    double x = Double.parseDouble(rawEasting) * 100;
 
-    // Point2D.Double latLon = ProjectionSupport.convertToLatLon(x, y);
-    // element.setLat(latLon.y);
-    // element.setLon(latLon.x);
+    Point2D.Double latLon = ProjectionSupport.convertToLatLon(x, y);
+    element.setLat(latLon.y);
+    element.setLon(latLon.x);
 
     element.setChangeTime(integer(pop(2)));
     element.setFootnote(pop(2));
