@@ -15,10 +15,27 @@
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime.model;
 
-public class CMessage {
+public class BerthMessage {
+
   private String areaId;
+
+  /**
+   * This appears to be the train reporting number:
+   * 
+   * http://en.wikipedia.org/wiki/Train_reporting_number
+   * 
+   * A four-character code with the following semantics:
+   * 
+   * - a single digit indicating the train class / type
+   * 
+   * - a letter indicating the destination area
+   * 
+   * - a two-digit number identifying the individual train
+   */
   private String descr;
+
   private String msgType;
+
   private String time;
 
   public String getAreaId() {
@@ -51,6 +68,10 @@ public class CMessage {
 
   public void setTime(String time) {
     this.time = time;
+  }
+
+  public long getTimeAsLong() {
+    return Long.parseLong(this.time);
   }
 
 }

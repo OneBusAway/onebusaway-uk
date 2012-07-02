@@ -44,6 +44,8 @@ public class NetworkRailToGtfsRealtimeMain {
 
   private static final String ARG_ATOC_TIMETABLE_PATH = "atocTimetablePath";
 
+  private static final String ARG_BERTH_MAPPING_PATH = "berthMappingPath";
+
   private static final String ARG_LOG_PATH = "logPath";
 
   private static final String ARG_REPLAY_LOGS = "replayLogs";
@@ -114,7 +116,10 @@ public class NetworkRailToGtfsRealtimeMain {
 
     _gtfsRealtimeService.setAtocTimetablePath(new File(
         cli.getOptionValue(ARG_ATOC_TIMETABLE_PATH)));
-
+    if (cli.hasOption(ARG_BERTH_MAPPING_PATH)) {
+      _gtfsRealtimeService.setBerthMappingPath(new File(
+          cli.getOptionValue(ARG_BERTH_MAPPING_PATH)));
+    }
     if (cli.hasOption(ARG_LOG_PATH)) {
       _loggingService.setLogPath(cli.getOptionValue(ARG_LOG_PATH));
     }
@@ -141,6 +146,7 @@ public class NetworkRailToGtfsRealtimeMain {
     options.addOption(ARG_USERNAME, true, "user name");
     options.addOption(ARG_PASSWORD, true, "password");
     options.addOption(ARG_ATOC_TIMETABLE_PATH, true, "atoc timetable path");
+    options.addOption(ARG_BERTH_MAPPING_PATH, true, "berth listing path");
     options.addOption(ARG_LOG_PATH, true, "log path");
     options.addOption(ARG_REPLAY_LOGS, false, "replay log");
     options.addOption(ARG_STATE_PATH, true, "state path");

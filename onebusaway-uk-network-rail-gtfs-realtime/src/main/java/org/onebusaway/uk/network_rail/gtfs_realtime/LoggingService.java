@@ -26,6 +26,7 @@ import java.util.Calendar;
 import java.util.Date;
 import java.util.List;
 
+import javax.annotation.PostConstruct;
 import javax.inject.Inject;
 import javax.inject.Singleton;
 
@@ -39,6 +40,8 @@ public class LoggingService {
 
   private GtfsRealtimeService _networkRailGtfsRealtimeService;
 
+  private NarrativeService _narrativeService;
+
   private String _logPath;
 
   /**
@@ -47,12 +50,17 @@ public class LoggingService {
    */
   private boolean _replayLogs = false;
 
-  private int _logHistoryInDays = 10;
+  private double _logHistoryInDays = 1.5;
 
   @Inject
   public void setNetworkRailGtfsRealtimeService(
       GtfsRealtimeService networkRailGtfsRealtimeService) {
     _networkRailGtfsRealtimeService = networkRailGtfsRealtimeService;
+  }
+
+  @Inject
+  public void setNarrativeService(NarrativeService narrativeService) {
+    _narrativeService = narrativeService;
   }
 
   public void setLogPath(String logPath) {
@@ -63,7 +71,8 @@ public class LoggingService {
     _replayLogs = replayLogs;
   }
 
-  public void replayLogs() throws IOException {
+  @PostConstruct
+  public void start() throws IOException {
     if (_logPath == null || !_replayLogs) {
       return;
     }
@@ -76,12 +85,16 @@ public class LoggingService {
       return;
     }
     Calendar c = Calendar.getInstance();
-    c.add(Calendar.DAY_OF_MONTH, -_logHistoryInDays);
+    c.add(Calendar.HOUR_OF_DAY, -(int) (_logHistoryInDays * 24));
     List<File> files = new ArrayList<File>();
     getRecentLogFiles(path, c.getTimeInMillis(), files);
     _log.info("replaying " + files.size() + " log files in " + path);
     for (File file : files) {
-      EMessageType messageType = getMessageTypeForFile(file);
+      String currentPath = file.getAbsolutePath().replace(
+          path.getAbsolutePath(), "").substring(1);
+      System.out.println(currentPath);
+      _narrativeService.setCurrentFile(currentPath);
+      EMessageType messageType = EMessageType.getMessageTypeForFile(file);
       if (messageType == null) {
         _log.warn("could not determine message type for file " + file);
         continue;
@@ -132,16 +145,6 @@ public class LoggingService {
           + name.substring(index);
     }
     return new File(path.getParentFile(), name);
-  }
-
-  private EMessageType getMessageTypeForFile(File file) {
-    String name = file.getName();
-    for (EMessageType messageType : EMessageType.values()) {
-      if (name.contains(messageType.toString())) {
-        return messageType;
-      }
-    }
-    return null;
   }
 
   private void getRecentLogFiles(File logDir, long minLastModified,

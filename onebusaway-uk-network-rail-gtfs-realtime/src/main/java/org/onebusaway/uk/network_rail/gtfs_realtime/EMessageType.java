@@ -15,6 +15,18 @@
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime;
 
+import java.io.File;
+
 public enum EMessageType {
-  TRAIN_MOVEMENT, TD
+  TRAIN_MOVEMENT, TD;
+
+  public static EMessageType getMessageTypeForFile(File file) {
+    String name = file.getName();
+    for (EMessageType messageType : values()) {
+      if (name.contains(messageType.toString())) {
+        return messageType;
+      }
+    }
+    return null;
+  }
 }

@@ -15,6 +15,15 @@
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime.model;
 
-public class CTMessage extends CMessage {
+public class BerthInterposeMessage extends BerthMessage {
 
+  private String to;
+
+  public String getTo() {
+    return to;
+  }
+
+  public void setTo(String to) {
+    this.to = to;
+  }
 }

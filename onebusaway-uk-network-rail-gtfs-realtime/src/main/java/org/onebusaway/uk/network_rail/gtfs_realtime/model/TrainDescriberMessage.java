@@ -19,46 +19,46 @@ import com.google.gson.annotations.SerializedName;
 
 public class TrainDescriberMessage {
   @SerializedName("CA_MSG")
-  private CAMessage caMessage;
+  private BerthStepMessage step;
 
   @SerializedName("CB_MSG")
-  private CBMessage cbMessage;
+  private BerthCancelMessage cancel;
 
   @SerializedName("CC_MSG")
-  private CCMessage ccMessage;
+  private BerthInterposeMessage interpose;
 
   @SerializedName("CT_MSG")
-  private CTMessage ctMessage;
+  private BerthHeartbeatMessage heartbeat;
 
-  public CAMessage getCaMessage() {
-    return caMessage;
+  public BerthStepMessage getStep() {
+    return step;
   }
 
-  public void setCaMessage(CAMessage caMessage) {
-    this.caMessage = caMessage;
+  public void setStep(BerthStepMessage step) {
+    this.step = step;
   }
 
-  public CBMessage getCbMessage() {
-    return cbMessage;
+  public BerthCancelMessage getCancel() {
+    return cancel;
   }
 
-  public void setCbMessage(CBMessage cbMessage) {
-    this.cbMessage = cbMessage;
+  public void setCancel(BerthCancelMessage cancel) {
+    this.cancel = cancel;
   }
 
-  public CCMessage getCcMessage() {
-    return ccMessage;
+  public BerthInterposeMessage getInterpose() {
+    return interpose;
   }
 
-  public void setCcMessage(CCMessage ccMessage) {
-    this.ccMessage = ccMessage;
+  public void setInterpose(BerthInterposeMessage interpose) {
+    this.interpose = interpose;
   }
 
-  public CTMessage getCtMessage() {
-    return ctMessage;
+  public BerthHeartbeatMessage getHeartbeat() {
+    return heartbeat;
   }
 
-  public void setCtMessage(CTMessage ctMessage) {
-    this.ctMessage = ctMessage;
+  public void setHeartbeat(BerthHeartbeatMessage heartbeat) {
+    this.heartbeat = heartbeat;
   }
 }

@@ -15,8 +15,9 @@
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime.model;
 
-public class CBMessage extends CMessage {
+public class BerthStepMessage extends BerthMessage {
   private String from;
+  private String to;
 
   public String getFrom() {
     return from;
@@ -24,5 +25,13 @@ public class CBMessage extends CMessage {
 
   public void setFrom(String from) {
     this.from = from;
+  }
+
+  public String getTo() {
+    return to;
+  }
+
+  public void setTo(String to) {
+    this.to = to;
   }
 }

@@ -40,9 +40,11 @@ import com.google.gson.JsonSyntaxException;
 public class JsonSchemaSummaryMain {
   public static void main(String[] args) throws JsonSyntaxException,
       IOException {
-    File base = new File("/Users/bdferris/Downloads/uk-rail/logs/2012-06-30");
+
     List<File> files = new ArrayList<File>();
-    getLogFiles(base, files);
+    for (String arg : args) {
+      getLogFiles(new File(arg), files);
+    }
 
     Map<String, Object> structure = new TreeMap<String, Object>();
 

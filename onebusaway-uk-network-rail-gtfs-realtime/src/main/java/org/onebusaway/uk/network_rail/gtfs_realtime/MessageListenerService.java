@@ -59,6 +59,8 @@ public class MessageListenerService {
 
   private Future<?> _task;
 
+  private boolean _enabled = false;
+
   @Inject
   public void setGtfsRealtimeService(GtfsRealtimeService gtfsRealtimeService) {
     _gtfsRealtimeService = gtfsRealtimeService;
@@ -77,9 +79,17 @@ public class MessageListenerService {
     _password = password;
   }
 
+  public void setEnabled(boolean enabled) {
+    _enabled = enabled;
+  }
+
   @PostConstruct
   public void start() throws Exception {
-
+    if (!_enabled) {
+      _log.info("stop connection disabled");
+      return;
+    }
+    _log.info("opening stop connection");
     _connection.open(_host, _port);
     _connection.connect(_username, _password);
 
@@ -90,6 +100,7 @@ public class MessageListenerService {
 
     _executor = Executors.newSingleThreadExecutor();
     _task = _executor.submit(new MessageProcessor());
+    _log.info("connection open");
   }
 
   @PreDestroy

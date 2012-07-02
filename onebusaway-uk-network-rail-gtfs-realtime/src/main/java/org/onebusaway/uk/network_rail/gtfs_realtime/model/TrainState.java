@@ -19,11 +19,13 @@ import java.io.Serializable;
 
 public final class TrainState implements Serializable {
 
-  private static final long serialVersionUID = 1L;
+  private static final long serialVersionUID = 2L;
 
   private String trainId;
 
   private String trainUid;
+  
+  private long serviceDate;
 
   private long lastUpdateTimestamp;
 
@@ -41,6 +43,14 @@ public final class TrainState implements Serializable {
 
   public void setTrainUid(String trainUid) {
     this.trainUid = trainUid;
+  }
+
+  public long getServiceDate() {
+    return serviceDate;
+  }
+
+  public void setServiceDate(long serviceDate) {
+    this.serviceDate = serviceDate;
   }
 
   public long getLastUpdateTimestamp() {
