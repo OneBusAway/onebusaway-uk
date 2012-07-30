@@ -1,17 +1,17 @@
 /**
  * Copyright (C) 2012 Google, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.onebusaway.uk.atco_cif_to_gtfs_converter;
 
@@ -65,7 +65,7 @@ public class AtcoCifToGtfsConverter {
   private static Logger _log = LoggerFactory.getLogger(AtcoCifToGtfsConverter.class);
 
   private static final int MINUTES_IN_DAY = 24 * 60;
-  
+
   private AtcoCifParser _parser = new AtcoCifParser();
 
   private File _inputPath;
@@ -94,7 +94,11 @@ public class AtcoCifToGtfsConverter {
 
   private Map<String, VehicleTypeElement> _vehicleTypesById = new HashMap<String, VehicleTypeElement>();
 
-  private Map<AgencyAndId, Map<String, RouteDescriptionElement>> _routeDescriptionsByIdAndDirection = new HashMap<AgencyAndId, Map<String, RouteDescriptionElement>>();
+  private Map<AgencyAndId, RouteMetadata> _routeMetadataById = new HashMap<AgencyAndId, RouteMetadata>();
+
+  // private Map<AgencyAndId, Map<String, RouteDescriptionElement>>
+  // _routeDescriptionsByIdAndDirection = new HashMap<AgencyAndId, Map<String,
+  // RouteDescriptionElement>>();
 
   private Map<String, OperatorElement> _operatorsById = new HashMap<String, OperatorElement>();
 
@@ -113,7 +117,7 @@ public class AtcoCifToGtfsConverter {
   private int _prunedStopTimesCount = 0;
 
   private int _prunedTripsCount = 0;
-  
+
   public AtcoCifParser getParser() {
     return _parser;
   }
@@ -175,7 +179,7 @@ public class AtcoCifToGtfsConverter {
       _log.error("No applicable input files were found!");
       System.exit(-1);
     }
-    
+
     HandlerImpl handler = new HandlerImpl();
     for (File path : paths) {
       _log.info("parsing file: " + path);
@@ -216,18 +220,30 @@ public class AtcoCifToGtfsConverter {
         trip.setServiceId(getServiceIdForJourney(journey));
 
         AgencyAndId routeId = trip.getRoute().getId();
-        Map<String, RouteDescriptionElement> routeDescriptions = _routeDescriptionsByIdAndDirection.get(routeId);
-        if (routeDescriptions != null) {
-          RouteDescriptionElement routeDescription = routeDescriptions.get(journey.getRouteDirection());
-          if (routeDescription != null) {
-            trip.setTripHeadsign(routeDescription.getRouteDescription());
-          }
+        RouteMetadata metadata = getMetadataForRouteId(routeId);
+
+        RouteDescriptionElement routeDescription = metadata.getRouteDescriptionForDirection(journey.getRouteDirection());
+        if (routeDescription != null) {
+          trip.setTripHeadsign(routeDescription.getRouteDescription());
+        }
+        Integer directionId = metadata.getDirectionIdForDirection(journey.getRouteDirection());
+        if (directionId != null) {
+          trip.setDirectionId(directionId.toString());
         }
 
         constructTimepoints(journey, trip);
         _dao.saveEntity(trip);
       }
     }
+  }
+
+  private RouteMetadata getMetadataForRouteId(AgencyAndId routeId) {
+    RouteMetadata metadata = _routeMetadataById.get(routeId);
+    if (metadata == null) {
+      metadata = new RouteMetadata();
+      _routeMetadataById.put(routeId, metadata);
+    }
+    return metadata;
   }
 
   @SuppressWarnings("unchecked")
@@ -251,19 +267,23 @@ public class AtcoCifToGtfsConverter {
   }
 
   private Route getRouteForJourney(JourneyHeaderElement journey) {
-    String operatorId = journey.getOperatorId();
-    AgencyAndId routeId = new AgencyAndId(operatorId, operatorId + "-"
-        + journey.getRouteIdentifier());
+    AgencyAndId routeId = getRouteIdForJourney(journey);
     Route route = _dao.getRouteForId(routeId);
     if (route == null) {
       route = new Route();
-      route.setAgency(getAgencyForId(operatorId));
+      route.setAgency(getAgencyForId(routeId.getAgencyId()));
       route.setId(routeId);
       route.setShortName(routeId.getId());
       route.setType(getRouteTypeForJourney(journey));
       _dao.saveEntity(route);
     }
     return route;
+  }
+
+  private AgencyAndId getRouteIdForJourney(JourneyHeaderElement journey) {
+    String operatorId = journey.getOperatorId();
+    return new AgencyAndId(operatorId, operatorId + "-"
+        + journey.getRouteIdentifier());
   }
 
   private Agency getAgencyForId(String id) {
@@ -584,6 +604,9 @@ public class AtcoCifToGtfsConverter {
           _journeysById.put(journeyId, journies);
         }
         journies.add(journey);
+        AgencyAndId routeId = getRouteIdForJourney(journey);
+        RouteMetadata metadata = getMetadataForRouteId(routeId);
+        metadata.addDirection(journey.getRouteDirection());
       } else if (element instanceof LocationElement) {
         LocationElement location = (LocationElement) element;
         _locationById.put(location.getLocationId(), location);
@@ -597,16 +620,8 @@ public class AtcoCifToGtfsConverter {
         RouteDescriptionElement route = (RouteDescriptionElement) element;
         AgencyAndId id = new AgencyAndId(route.getOperatorId(),
             route.getRouteNumber());
-        Map<String, RouteDescriptionElement> byDirection = _routeDescriptionsByIdAndDirection.get(id);
-        if (byDirection == null) {
-          byDirection = new HashMap<String, RouteDescriptionElement>();
-          _routeDescriptionsByIdAndDirection.put(id, byDirection);
-        }
-        RouteDescriptionElement existing = byDirection.put(
-            route.getRouteDirection(), route);
-        if (existing != null) {
-          System.out.println(existing);
-        }
+        RouteMetadata metadata = getMetadataForRouteId(id);
+        metadata.addRouteDescription(route);
       } else if (element instanceof OperatorElement) {
         OperatorElement operator = (OperatorElement) element;
         OperatorElement existing = _operatorsById.put(operator.getOperatorId(),
