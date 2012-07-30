@@ -47,7 +47,7 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
 
   private static final Projection _toProjection = ProjectionFactory.fromPROJ4Specification(_toProjectionSpec.split(" "));
 
-  private DateFormat _serviceDateFormat = new SimpleDateFormat("yyyymmdd");
+  private DateFormat _serviceDateFormat = new SimpleDateFormat("yyyyMMdd");
 
   private JourneyHeaderElement _currentJourney = null;
 
@@ -171,6 +171,7 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     element.setThursday(integer(pop(1)));
     element.setFriday(integer(pop(1)));
     element.setSaturday(integer(pop(1)));
+
     element.setSunday(integer(pop(1)));
 
     String schoolTermTime = pop(1);
