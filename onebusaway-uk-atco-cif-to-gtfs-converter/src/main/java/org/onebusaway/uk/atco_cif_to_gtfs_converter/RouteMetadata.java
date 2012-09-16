@@ -45,7 +45,7 @@ public class RouteMetadata {
 
   public void addRouteDescription(RouteDescriptionElement route) {
     RouteDescriptionElement existing = _routeDescriptionsByDirection.put(
-        route.getRouteDescription(), route);
+        route.getRouteDirection(), route);
     if (existing != null) {
       _log.warn("multiple route descriptions with the same direction");
     }

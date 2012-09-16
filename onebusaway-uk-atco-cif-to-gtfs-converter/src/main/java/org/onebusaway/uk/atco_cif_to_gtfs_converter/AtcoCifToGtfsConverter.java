@@ -276,8 +276,12 @@ public class AtcoCifToGtfsConverter {
       route = new Route();
       route.setAgency(getAgencyForId(routeId.getAgencyId()));
       route.setId(routeId);
-      route.setShortName(routeId.getId());
+      route.setShortName(journey.getRouteIdentifier());
       route.setType(getRouteTypeForJourney(journey));
+      RouteMetadata metaData = _routeMetadataById.get(routeId);
+      if (metaData != null) {
+        System.currentTimeMillis();
+      }
       _dao.saveEntity(route);
     }
     return route;
@@ -285,6 +289,8 @@ public class AtcoCifToGtfsConverter {
 
   private AgencyAndId getRouteIdForJourney(JourneyHeaderElement journey) {
     String operatorId = journey.getOperatorId();
+    // Note that we include the operator id in the id portion as well because
+    // the route identifiers are not unique by themselves in the output GTFS.
     return new AgencyAndId(operatorId, operatorId + "-"
         + journey.getRouteIdentifier());
   }
@@ -627,7 +633,7 @@ public class AtcoCifToGtfsConverter {
       } else if (element instanceof RouteDescriptionElement) {
         RouteDescriptionElement route = (RouteDescriptionElement) element;
         AgencyAndId id = new AgencyAndId(route.getOperatorId(),
-            route.getRouteNumber());
+            route.getOperatorId() + "-" + route.getRouteNumber());
         RouteMetadata metadata = getMetadataForRouteId(id);
         metadata.addRouteDescription(route);
       } else if (element instanceof OperatorElement) {
