@@ -46,12 +46,6 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
 
   private String _ignoreElementTypeWithPrefix = null;
 
-  public void parse(File path, ContentHandler handler) throws IOException {
-    BufferedReader reader = new BufferedReader(new InputStreamReader(
-        new FileInputStream(path), "UTF-8"));
-    parse(path.getAbsolutePath(), reader, handler);
-  }
-
   /**
    * If an elementType value has the specified prefix, the element will be
    * ignored.
@@ -60,6 +54,12 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
    */
   public void setIgnoreElementTypeWithPrefix(String prefix) {
     _ignoreElementTypeWithPrefix = prefix;
+  }
+
+  public void parse(File path, ContentHandler handler) throws IOException {
+    BufferedReader reader = new BufferedReader(new InputStreamReader(
+        new FileInputStream(path), "UTF-8"));
+    parse(path.getAbsolutePath(), reader, handler);
   }
 
   public void parse(String path, BufferedReader reader, ContentHandler handler)
