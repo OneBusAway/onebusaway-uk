@@ -34,6 +34,10 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
 
   protected Map<String, ElementType> _typesByKey = new HashMap<String, ElementType>();
 
+  protected Map<String, ExtensionParser> _extensionParsersByKey = new HashMap<String, ExtensionParser>();
+
+  private ParserInstance _parserInstance = new ParserInstanceImpl();
+
   private String _currentPath = null;
 
   private int _currentLineNumber = 0;
@@ -54,6 +58,10 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
    */
   public void setIgnoreElementTypeWithPrefix(String prefix) {
     _ignoreElementTypeWithPrefix = prefix;
+  }
+
+  public void addExtension(String key, ExtensionParser parser) {
+    _extensionParsersByKey.put(key, parser);
   }
 
   public void parse(File path, ContentHandler handler) throws IOException {
@@ -104,29 +112,26 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
   }
 
   protected boolean parseLine(ContentHandler handler) {
-    ElementType type = parseElementTypeForLine();
-    if (type == null) {
+    String typeValue = pop(_elementTypeKeySize);
+    ElementType type = _typesByKey.get(typeValue);
+    if (type != null) {
+      return handleRecordType(type, handler);
+    }
+    ExtensionParser extensionParser = _extensionParsersByKey.get(typeValue);
+    if (extensionParser != null) {
+      return extensionParser.handleExtensionRecordType(_parserInstance, handler);
+    }
+    if (_ignoreElementTypeWithPrefix != null
+        && typeValue.startsWith(_ignoreElementTypeWithPrefix)) {
       return true;
     }
-    return handleRecordType(type, handler);
+
+    throw new ParserException("unknown record type: " + typeValue + " at "
+        + describeLineLocation());
   }
 
   protected void setElementTypeKeySize(int size) {
     _elementTypeKeySize = size;
-  }
-
-  protected ElementType parseElementTypeForLine() {
-    String typeValue = pop(_elementTypeKeySize);
-    if (_ignoreElementTypeWithPrefix != null
-        && typeValue.startsWith(_ignoreElementTypeWithPrefix)) {
-      return null;
-    }
-    ElementType type = _typesByKey.get(typeValue);
-    if (type == null) {
-      throw new ParserException("unknown record type: " + typeValue + " at "
-          + describeLineLocation());
-    }
-    return type;
   }
 
   /**
@@ -191,5 +196,23 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
 
   protected String describeLineLocation() {
     return "file=" + _currentPath + " line=" + _currentLineNumber;
+  }
+
+  private class ParserInstanceImpl implements ParserInstance {
+
+    @Override
+    public <T extends Element> T element(T element) {
+      return AbstractParser.this.element(element);
+    }
+
+    @Override
+    public String pop(int count) {
+      return AbstractParser.this.pop(count);
+    }
+
+    @Override
+    public void fireElement(Element element, ContentHandler handler) {
+      AbstractParser.this.fireElement(element, handler);
+    }
   }
 }
