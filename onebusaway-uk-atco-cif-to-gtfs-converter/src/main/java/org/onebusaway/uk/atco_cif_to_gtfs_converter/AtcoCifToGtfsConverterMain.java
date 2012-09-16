@@ -28,6 +28,7 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
+import org.onebusaway.uk.atco_cif.extensions.NationalExpressLocationNameParser;
 import org.onebusaway.uk.parser.ParserException;
 
 public class AtcoCifToGtfsConverterMain {
@@ -49,8 +50,10 @@ public class AtcoCifToGtfsConverterMain {
   private static final String ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO = "pruneStopsWithNoLocationInfo";
 
   private static final String ARG_PRUNE_STOPS_WITH_PREFIX = "pruneStopsWithPrefix";
-  
+
   private static final String ARG_LOCATION_SCALE_FACTOR = "locationScaleFactor";
+
+  private static final String ARG_NATIONAL_EXPRESS_LOCATION_NAME_EXTENSION = "nationalExpressLocationNameExtension";
 
   public static void main(String[] args) throws ParseException, IOException {
     AtcoCifToGtfsConverterMain m = new AtcoCifToGtfsConverterMain();
@@ -129,7 +132,7 @@ public class AtcoCifToGtfsConverterMain {
       }
     }
     converter.setPruneStopsWithNoLocationInfo(cli.hasOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO));
-    if( cli.hasOption(ARG_LOCATION_SCALE_FACTOR)) {
+    if (cli.hasOption(ARG_LOCATION_SCALE_FACTOR)) {
       double locationScaleFactor = Double.parseDouble(cli.getOptionValue(ARG_LOCATION_SCALE_FACTOR));
       converter.getParser().setLocationScaleFactor(locationScaleFactor);
     }
@@ -142,6 +145,10 @@ public class AtcoCifToGtfsConverterMain {
       if (!pruneStopsWithPrefixes.isEmpty()) {
         converter.setPruneStopsWithPrefixes(pruneStopsWithPrefixes);
       }
+    }
+    if (cli.hasOption(ARG_NATIONAL_EXPRESS_LOCATION_NAME_EXTENSION)) {
+      converter.getParser().addExtension("ZN",
+          new NationalExpressLocationNameParser());
     }
   }
 
@@ -156,6 +163,7 @@ public class AtcoCifToGtfsConverterMain {
     options.addOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO, false, "");
     options.addOption(ARG_PRUNE_STOPS_WITH_PREFIX, true, "");
     options.addOption(ARG_LOCATION_SCALE_FACTOR, true, "");
+    options.addOption(ARG_NATIONAL_EXPRESS_LOCATION_NAME_EXTENSION, false, "");
   }
 
   private void usage() throws IOException {

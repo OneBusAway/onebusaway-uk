@@ -40,6 +40,8 @@ public class AtcoCifElement extends Element {
     ROUTE_DESCRIPTION,
 
     OPERATOR,
+    
+    EXTENSION,
 
     UNKNOWN
   }

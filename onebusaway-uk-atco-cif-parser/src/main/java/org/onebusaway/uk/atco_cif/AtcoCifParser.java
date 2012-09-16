@@ -345,4 +345,5 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     return hour * 60 + min;
   }
 
+
 }

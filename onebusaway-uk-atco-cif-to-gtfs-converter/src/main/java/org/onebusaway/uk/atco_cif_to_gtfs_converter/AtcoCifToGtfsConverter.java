@@ -55,6 +55,7 @@ import org.onebusaway.uk.atco_cif.LocationElement;
 import org.onebusaway.uk.atco_cif.OperatorElement;
 import org.onebusaway.uk.atco_cif.RouteDescriptionElement;
 import org.onebusaway.uk.atco_cif.VehicleTypeElement;
+import org.onebusaway.uk.atco_cif.extensions.NationalExpressLocationNameElement;
 import org.onebusaway.uk.parser.ContentHandler;
 import org.onebusaway.uk.parser.Element;
 import org.slf4j.Logger;
@@ -91,6 +92,8 @@ public class AtcoCifToGtfsConverter {
   private Map<String, LocationElement> _locationById = new HashMap<String, LocationElement>();
 
   private Map<String, AdditionalLocationElement> _additionalLocationById = new HashMap<String, AdditionalLocationElement>();
+
+  private Map<String, NationalExpressLocationNameElement> _nxLocationNamesById = new HashMap<String, NationalExpressLocationNameElement>();
 
   private Map<String, VehicleTypeElement> _vehicleTypesById = new HashMap<String, VehicleTypeElement>();
 
@@ -528,10 +531,15 @@ public class AtcoCifToGtfsConverter {
           return null;
         }
       }
+      String name = location.getName();
+      NationalExpressLocationNameElement nxNameElement = _nxLocationNamesById.get(locationId);
+      if (nxNameElement != null && !nxNameElement.getFullName().isEmpty()) {
+        name = nxNameElement.getFullName();
+      }
 
       stop = new Stop();
       stop.setId(id(locationId));
-      stop.setName(location.getName());
+      stop.setName(name);
       stop.setLat(additionalLocation.getLat());
       stop.setLon(additionalLocation.getLon());
 
@@ -629,8 +637,10 @@ public class AtcoCifToGtfsConverter {
         if (existing != null) {
           _log.info("!");
         }
+      } else if (element instanceof NationalExpressLocationNameElement) {
+        NationalExpressLocationNameElement nxNameElement = (NationalExpressLocationNameElement) element;
+        _nxLocationNamesById.put(nxNameElement.getLocationId(), nxNameElement);
       }
-
     }
 
     @Override
