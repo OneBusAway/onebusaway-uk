@@ -29,6 +29,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.commons.cli.Parser;
 import org.apache.commons.cli.PosixParser;
 import org.onebusaway.uk.atco_cif.extensions.NationalExpressLocationNameParser;
+import org.onebusaway.uk.atco_cif.extensions.greater_manchester.GreaterManchesterParser;
 import org.onebusaway.uk.parser.ParserException;
 
 public class AtcoCifToGtfsConverterMain {
@@ -53,7 +54,11 @@ public class AtcoCifToGtfsConverterMain {
 
   private static final String ARG_LOCATION_SCALE_FACTOR = "locationScaleFactor";
 
+  private static final String ARG_NAPTAN_CSV_PATH = "naptanCsvPath";
+
   private static final String ARG_NATIONAL_EXPRESS_LOCATION_NAME_EXTENSION = "nationalExpressLocationNameExtension";
+
+  private static final String ARG_GREATER_MANCHESTER_EXTENSIONS = "greaterManchesterExtensions";
 
   public static void main(String[] args) throws ParseException, IOException {
     AtcoCifToGtfsConverterMain m = new AtcoCifToGtfsConverterMain();
@@ -146,9 +151,17 @@ public class AtcoCifToGtfsConverterMain {
         converter.setPruneStopsWithPrefixes(pruneStopsWithPrefixes);
       }
     }
+    if (cli.hasOption(ARG_NAPTAN_CSV_PATH)) {
+      converter.setNaptanCsvPath(new File(
+          cli.getOptionValue(ARG_NAPTAN_CSV_PATH)));
+    }
     if (cli.hasOption(ARG_NATIONAL_EXPRESS_LOCATION_NAME_EXTENSION)) {
       converter.getParser().addExtension("ZN",
           new NationalExpressLocationNameParser());
+    }
+    if (cli.hasOption(ARG_GREATER_MANCHESTER_EXTENSIONS)) {
+      GreaterManchesterParser parser = new GreaterManchesterParser();
+      converter.getParser().addExtension("ZA", parser);
     }
   }
 
@@ -163,7 +176,9 @@ public class AtcoCifToGtfsConverterMain {
     options.addOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO, false, "");
     options.addOption(ARG_PRUNE_STOPS_WITH_PREFIX, true, "");
     options.addOption(ARG_LOCATION_SCALE_FACTOR, true, "");
+    options.addOption(ARG_NAPTAN_CSV_PATH, true, "");
     options.addOption(ARG_NATIONAL_EXPRESS_LOCATION_NAME_EXTENSION, false, "");
+    options.addOption(ARG_GREATER_MANCHESTER_EXTENSIONS, false, "");
   }
 
   private void usage() throws IOException {

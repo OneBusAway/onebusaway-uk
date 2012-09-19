@@ -30,6 +30,9 @@ import java.util.Map;
 import java.util.Set;
 import java.util.TimeZone;
 
+import org.onebusaway.csv_entities.CsvEntityReader;
+import org.onebusaway.csv_entities.EntityHandler;
+import org.onebusaway.csv_entities.schema.AnnotationDrivenEntitySchemaFactory;
 import org.onebusaway.csv_entities.schema.DefaultEntitySchemaFactory;
 import org.onebusaway.gtfs.impl.GtfsRelationalDaoImpl;
 import org.onebusaway.gtfs.model.Agency;
@@ -56,6 +59,8 @@ import org.onebusaway.uk.atco_cif.OperatorElement;
 import org.onebusaway.uk.atco_cif.RouteDescriptionElement;
 import org.onebusaway.uk.atco_cif.VehicleTypeElement;
 import org.onebusaway.uk.atco_cif.extensions.NationalExpressLocationNameElement;
+import org.onebusaway.uk.atco_cif.extensions.greater_manchester.GreaterManchesterTimetableRowListElement;
+import org.onebusaway.uk.naptan.csv.NaPTANStop;
 import org.onebusaway.uk.parser.ContentHandler;
 import org.onebusaway.uk.parser.Element;
 import org.slf4j.Logger;
@@ -93,6 +98,10 @@ public class AtcoCifToGtfsConverter {
 
   private Map<String, AdditionalLocationElement> _additionalLocationById = new HashMap<String, AdditionalLocationElement>();
 
+  private Map<String, NaPTANStop> _stopsByAtcoId = new HashMap<String, NaPTANStop>();
+
+  private Map<String, GreaterManchesterTimetableRowListElement> _greaterManchesterRowListsByLocationId = new HashMap<String, GreaterManchesterTimetableRowListElement>();
+
   private Map<String, NationalExpressLocationNameElement> _nxLocationNamesById = new HashMap<String, NationalExpressLocationNameElement>();
 
   private Map<String, VehicleTypeElement> _vehicleTypesById = new HashMap<String, VehicleTypeElement>();
@@ -112,6 +121,8 @@ public class AtcoCifToGtfsConverter {
   private boolean _pruneStopsWithNoLocationInfo = false;
 
   private Set<String> _pruneStopsWithPrefixes = Collections.emptySet();
+
+  private File _naptanCsvPath;
 
   private Set<String> _stopsWithNoLocationInfo = new HashSet<String>();
 
@@ -170,10 +181,16 @@ public class AtcoCifToGtfsConverter {
     _pruneStopsWithPrefixes = pruneStopsWithPrefixes;
   }
 
+  public void setNaptanCsvPath(File naptanCsvPath) {
+    _naptanCsvPath = naptanCsvPath;
+  }
+
   public void run() throws IOException {
 
     _log.info("Input path: " + _inputPath);
     _log.info("Output path: " + _outputPath);
+
+    loadNaptanDataIfNeeded();
 
     List<File> paths = new ArrayList<File>();
     getApplicableFiles(_inputPath, paths);
@@ -198,6 +215,29 @@ public class AtcoCifToGtfsConverter {
           _prunedStopsWithNoLocationInfoCount, _prunedStopTimesCount,
           _prunedTripsCount));
     }
+  }
+
+  private void loadNaptanDataIfNeeded() throws IOException {
+    if (_naptanCsvPath == null) {
+      return;
+    }
+
+    CsvEntityReader reader = new CsvEntityReader();
+    reader.setInputLocation(_naptanCsvPath);
+    AnnotationDrivenEntitySchemaFactory entitySchema = new AnnotationDrivenEntitySchemaFactory();
+    entitySchema.addPackageToScan("org.onebusaway.uk.naptan.csv");
+    reader.setEntitySchemaFactory(entitySchema);
+    reader.addEntityHandler(new EntityHandler() {
+      @Override
+      public void handleEntity(Object arg0) {
+        NaPTANStop stop = (NaPTANStop) arg0;
+        _stopsByAtcoId.put(stop.getAtcoCode(), stop);
+      }
+    });
+    reader.readEntities(NaPTANStop.class);
+
+    reader.close();
+
   }
 
   private void constructGtfs() {
@@ -319,11 +359,13 @@ public class AtcoCifToGtfsConverter {
   }
 
   private int getRouteTypeForJourney(JourneyHeaderElement journey) {
-    VehicleTypeElement vehicleType = _vehicleTypesById.get(journey.getVehicleType());
-    if (vehicleType == null) {
-      throw new AtcoCifException("unknown vehicle type: " + vehicleType);
+    String vehicleType = journey.getVehicleType();
+    VehicleTypeElement vehicleTypeElement = _vehicleTypesById.get(journey.getVehicleType());
+
+    if (vehicleTypeElement != null) {
+      vehicleType = vehicleTypeElement.getDescription();
     }
-    String desc = vehicleType.getDescription().toLowerCase();
+    String desc = vehicleType.toLowerCase();
     if (desc.equals("bus") || desc.equals("coach")) {
       return 3;
     } else if (desc.equals("heavy rail")) {
@@ -512,11 +554,51 @@ public class AtcoCifToGtfsConverter {
         return null;
       }
     }
-    LocationElement location = getLocationForId(stopId);
-    if (location == null) {
-      throw new AtcoCifException("no stop found with id " + stopId);
+    NaPTANStop naptanStop = _stopsByAtcoId.get(stopId);
+    if (naptanStop != null) {
+      return getNaptanStop(naptanStop);
     }
+    LocationElement location = getLocationForId(stopId);
+    if (location != null) {
+      return getAtcoStop(location);
+    }
+    GreaterManchesterTimetableRowListElement rowList = _greaterManchesterRowListsByLocationId.get(stopId);
+    if (rowList != null) {
+      return getGreaterManchesterRowListStop(rowList);
+    }
+    throw new AtcoCifException("no stop found with id " + stopId);
+  }
 
+  private Stop getNaptanStop(NaPTANStop naptanStop) {
+    AgencyAndId id = id(naptanStop.getAtcoCode());
+    Stop stop = _dao.getStopForId(id);
+    if (stop == null) {
+      stop = new Stop();
+      stop.setId(id);
+      stop.setName(naptanStop.getCommonName());
+      stop.setLat(naptanStop.getLatitude());
+      stop.setLon(naptanStop.getLongitude());
+      _dao.saveEntity(stop);
+    }
+    return stop;
+  }
+
+  private LocationElement getLocationForId(String stopId) {
+    LocationElement location = _locationById.get(stopId);
+    /**
+     * I've noticed a strange case where a journey references a stop with an id
+     * "blahX" when only a stop with id "blah" exists.
+     */
+    if (location == null) {
+      if (stopId.length() > 1) {
+        stopId = stopId.substring(0, stopId.length() - 1);
+        location = _locationById.get(stopId);
+      }
+    }
+    return location;
+  }
+
+  private Stop getAtcoStop(LocationElement location) {
     String locationId = location.getLocationId();
     AgencyAndId id = id(locationId);
     Stop stop = _dao.getStopForId(id);
@@ -529,7 +611,7 @@ public class AtcoCifToGtfsConverter {
 
       if (additionalLocation.getLat() == 0.0
           || additionalLocation.getLon() == 0.0) {
-        if (_stopsWithNoLocationInfo.add(stopId)) {
+        if (_stopsWithNoLocationInfo.add(locationId)) {
           _log.info("stop with no location: " + locationId);
           _prunedStopsWithNoLocationInfoCount++;
         }
@@ -554,19 +636,17 @@ public class AtcoCifToGtfsConverter {
     return stop;
   }
 
-  private LocationElement getLocationForId(String stopId) {
-    LocationElement location = _locationById.get(stopId);
-    /**
-     * I've noticed a strange case where a journey references a stop with an id
-     * "blahX" when only a stop with id "blah" exists.
-     */
-    if (location == null) {
-      if (stopId.length() > 1) {
-        stopId = stopId.substring(0, stopId.length() - 1);
-        location = _locationById.get(stopId);
-      }
+  private Stop getGreaterManchesterRowListStop(
+      GreaterManchesterTimetableRowListElement rowList) {
+    AgencyAndId id = id(rowList.getLocationReference());
+    Stop stop = _dao.getStopForId(id);
+    if (stop == null) {
+      stop = new Stop();
+      stop.setId(id);
+      stop.setName(rowList.getFullLocation());
+      _dao.saveEntity(stop);
     }
-    return location;
+    return stop;
   }
 
   private void writeGtfs() throws IOException {
@@ -646,6 +726,10 @@ public class AtcoCifToGtfsConverter {
       } else if (element instanceof NationalExpressLocationNameElement) {
         NationalExpressLocationNameElement nxNameElement = (NationalExpressLocationNameElement) element;
         _nxLocationNamesById.put(nxNameElement.getLocationId(), nxNameElement);
+      } else if (element instanceof GreaterManchesterTimetableRowListElement) {
+        GreaterManchesterTimetableRowListElement rowList = (GreaterManchesterTimetableRowListElement) element;
+        _greaterManchesterRowListsByLocationId.put(
+            rowList.getLocationReference(), rowList);
       }
     }
 

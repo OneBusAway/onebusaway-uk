@@ -16,9 +16,14 @@
   </properties>
 
   <dependencies>
-      <dependency>
+    <dependency>
       <groupId>org.onebusaway</groupId>
       <artifactId>onebusaway-uk-atco-cif-parser</artifactId>
+      <version>${project.version}</version>
+    </dependency>
+    <dependency>
+      <groupId>org.onebusaway</groupId>
+      <artifactId>onebusaway-uk-naptan-csv</artifactId>
       <version>${project.version}</version>
     </dependency>
     <dependency>
@@ -55,8 +60,7 @@
             <configuration>
               <shadedClassifierName>withAllDependencies</shadedClassifierName>
               <transformers>
-                <transformer
-                  implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
+                <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                   <mainClass>org.onebusaway.uk.atco_cif_to_gtfs_converter.AtcoCifToGtfsConverterMain</mainClass>
                 </transformer>
               </transformers>
