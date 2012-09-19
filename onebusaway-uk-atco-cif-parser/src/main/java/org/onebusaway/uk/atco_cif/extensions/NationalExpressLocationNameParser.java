@@ -22,8 +22,8 @@ import org.onebusaway.uk.parser.ParserInstance;
 public class NationalExpressLocationNameParser implements ExtensionParser {
 
   @Override
-  public boolean handleExtensionRecordType(ParserInstance parser,
-      ContentHandler handler) {
+  public boolean handleExtensionRecordType(String typeValue,
+      ParserInstance parser, ContentHandler handler) {
     NationalExpressLocationNameElement element = parser.element(new NationalExpressLocationNameElement());
     parser.pop(1);
     element.setLocationId(parser.pop(12));

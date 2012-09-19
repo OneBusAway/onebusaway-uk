@@ -119,7 +119,7 @@ public abstract class AbstractParser<ElementType extends Enum<ElementType>> {
     }
     ExtensionParser extensionParser = _extensionParsersByKey.get(typeValue);
     if (extensionParser != null) {
-      return extensionParser.handleExtensionRecordType(_parserInstance, handler);
+      return extensionParser.handleExtensionRecordType(typeValue, _parserInstance, handler);
     }
     if (_ignoreElementTypeWithPrefix != null
         && typeValue.startsWith(_ignoreElementTypeWithPrefix)) {

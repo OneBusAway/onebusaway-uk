@@ -18,10 +18,11 @@ package org.onebusaway.uk.parser;
 public interface ExtensionParser {
   /**
    * 
+   * @param typeValue TODO
    * @param parser
    * @param handler
    * @return false if parsing should not continue
    */
-  public boolean handleExtensionRecordType(ParserInstance parser,
-      ContentHandler handler);
+  public boolean handleExtensionRecordType(String typeValue,
+      ParserInstance parser, ContentHandler handler);
 }
