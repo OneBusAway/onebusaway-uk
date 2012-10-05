@@ -1,17 +1,17 @@
 /**
  * Copyright (C) 2012 Google, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime;
 
@@ -52,6 +52,8 @@ public class NetworkRailToGtfsRealtimeMain {
 
   private static final String ARG_STATE_PATH = "statePath";
 
+  private static final String ARG_NARRATIVE_PATH = "narrativePath";
+
   private static final String ARG_TRIP_UPDATES_PATH = "tripUpdatesPath";
 
   private static final String ARG_TRIP_UPDATES_URL = "tripUpdatesUrl";
@@ -61,6 +63,8 @@ public class NetworkRailToGtfsRealtimeMain {
   private GtfsRealtimeService _gtfsRealtimeService;
 
   private LoggingService _loggingService;
+
+  private NarrativeService _narrativeService;
 
   private LifecycleService _lifecycleService;
 
@@ -83,6 +87,11 @@ public class NetworkRailToGtfsRealtimeMain {
   @Inject
   public void setLoggingService(LoggingService loggingService) {
     _loggingService = loggingService;
+  }
+
+  @Inject
+  public void setNarrativeService(NarrativeService narrativeService) {
+    _narrativeService = narrativeService;
   }
 
   @Inject
@@ -129,6 +138,10 @@ public class NetworkRailToGtfsRealtimeMain {
       _gtfsRealtimeService.setStatePath(new File(
           cli.getOptionValue(ARG_STATE_PATH)));
     }
+    
+    if(cli.hasOption(ARG_NARRATIVE_PATH)) {
+      _narrativeService.setLogPath(cli.getOptionValue(ARG_NARRATIVE_PATH));
+    }
 
     if (cli.hasOption(ARG_TRIP_UPDATES_PATH)) {
       TripUpdatesFileWriter writer = injector.getInstance(TripUpdatesFileWriter.class);
@@ -150,6 +163,7 @@ public class NetworkRailToGtfsRealtimeMain {
     options.addOption(ARG_LOG_PATH, true, "log path");
     options.addOption(ARG_REPLAY_LOGS, false, "replay log");
     options.addOption(ARG_STATE_PATH, true, "state path");
+    options.addOption(ARG_NARRATIVE_PATH, true, "narrative path");
     options.addOption(ARG_TRIP_UPDATES_PATH, true, "trip updates path");
     options.addOption(ARG_TRIP_UPDATES_URL, true, "trip updates url");
   }

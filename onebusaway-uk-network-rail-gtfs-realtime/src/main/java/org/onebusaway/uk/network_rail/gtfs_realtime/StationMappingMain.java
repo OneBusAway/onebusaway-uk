@@ -37,10 +37,10 @@ public class StationMappingMain {
     JAXBContext context = JAXBContext.newInstance("uk.org.naptan");
     Unmarshaller unmarshaller = context.createUnmarshaller();
     NaPTAN result = (NaPTAN) unmarshaller.unmarshal(new File(
-        "/Users/bdferris/Downloads/uk-rail/NaPTAN/NaPTAN.xml"));
+        "/Users/bdferris/Documents/uk-rail/naptan/NaPTAN.xml"));
 
     PrintWriter writer = new PrintWriter(new File(
-        "/Users/bdferris/Downloads/uk-rail/NaPTAN/stations.csv"));
+        "/Users/bdferris/Documents/uk-rail/naptan/stations.xml"));
     writer.println("tiploc,lat,lon");
     StopPointsStructure stopPoints = result.getStopPoints();
     int i = 0;

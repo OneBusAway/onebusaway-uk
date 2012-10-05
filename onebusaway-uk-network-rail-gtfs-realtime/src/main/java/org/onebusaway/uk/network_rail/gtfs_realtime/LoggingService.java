@@ -50,7 +50,7 @@ public class LoggingService {
    */
   private boolean _replayLogs = false;
 
-  private double _logHistoryInDays = 1.5;
+  private double _logHistoryInDays = 11.5;
 
   @Inject
   public void setNetworkRailGtfsRealtimeService(
@@ -89,10 +89,15 @@ public class LoggingService {
     List<File> files = new ArrayList<File>();
     getRecentLogFiles(path, c.getTimeInMillis(), files);
     _log.info("replaying " + files.size() + " log files in " + path);
+    int index = 0;
     for (File file : files) {
+      if (index % 1000 == 0){
+        _log.info("files=" + index);
+      }
+      index++;
       String currentPath = file.getAbsolutePath().replace(
           path.getAbsolutePath(), "").substring(1);
-      System.out.println(currentPath);
+      //System.out.println(currentPath);
       _narrativeService.setCurrentFile(currentPath);
       EMessageType messageType = EMessageType.getMessageTypeForFile(file);
       if (messageType == null) {
@@ -102,18 +107,19 @@ public class LoggingService {
       BufferedReader reader = new BufferedReader(new FileReader(file));
       String line = null;
       while ((line = reader.readLine()) != null) {
-        _networkRailGtfsRealtimeService.processMessages(messageType, line);
+        _networkRailGtfsRealtimeService.processMessage(file.lastModified(), messageType, line, currentPath);
       }
+      reader.close();
     }
     _log.info("replay complete");
   }
 
-  public void logMessage(EMessageType messageType, String jsonMessage) {
+  public void logMessage(long timestamp, EMessageType messageType, String jsonMessage) {
     if (_logPath == null) {
       return;
     }
 
-    File path = getNextPath(messageType);
+    File path = getNextPath(timestamp, messageType);
     path.getParentFile().mkdirs();
 
     BufferedWriter writer = null;
@@ -134,8 +140,8 @@ public class LoggingService {
     }
   }
 
-  private File getNextPath(EMessageType messageType) {
-    File path = new File(String.format(_logPath, new Date()));
+  private File getNextPath(long timestamp, EMessageType messageType) {
+    File path = new File(String.format(_logPath, new Date(timestamp)));
     String name = path.getName();
     int index = name.lastIndexOf('.');
     if (index == -1) {

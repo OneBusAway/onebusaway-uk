@@ -74,6 +74,9 @@ public class MasterStationsNamesParser extends AbstractParser<EStationRowType> {
     
     double y = Double.parseDouble(rawNorthing) * 100;
     double x = Double.parseDouble(rawEasting) * 100;
+    
+    element.setNorthing(y);
+    element.setEasting(x);
 
     Point2D.Double latLon = ProjectionSupport.convertToLatLon(x, y);
     element.setLat(latLon.y);

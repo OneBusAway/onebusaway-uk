@@ -43,4 +43,15 @@ public class ProjectionSupport {
         _toProjection, from, result);
     return result;
   }
+  
+  public static Point2D.Double convertFromLatLon(double lat, double lon) {
+    return convertFromLatLon(lat, lon, new Point2D.Double());
+  }
+  
+  public static Point2D.Double convertFromLatLon(double lat, double lon, Point2D.Double result) {
+    Point2D.Double from = new Point2D.Double(lon, lat);
+    CoordinateSystemToCoordinateSystem.transform(_toProjection,
+        _fromProjection, from, result);
+    return result;
+  }
 }

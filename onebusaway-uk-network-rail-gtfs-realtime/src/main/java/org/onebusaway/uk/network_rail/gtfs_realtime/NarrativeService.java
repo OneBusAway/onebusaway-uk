@@ -27,6 +27,7 @@ import java.util.Map;
 import javax.annotation.PreDestroy;
 import javax.inject.Singleton;
 
+import org.onebusaway.uk.network_rail.gtfs_realtime.instance.TrainInstance;
 import org.onebusaway.uk.network_rail.gtfs_realtime.model.BerthMessage;
 
 @Singleton
@@ -38,10 +39,10 @@ public class NarrativeService {
 
   private Map<String, File> _pathsByTrainReportingNumber = new HashMap<String, File>();
 
-  private String _logPath = "/Users/bdferris/Downloads/uk-rail/narratives/%1$tF/%1$tH/%1$tT.%1$tL-%2$s.log";
+  private String _logPath = null;
 
   private String _currentFile;
-
+  
   public void setLogPath(String logPath) {
     _logPath = logPath;
   }
@@ -62,6 +63,9 @@ public class NarrativeService {
 
   public void addMessage(String trainReportingNumber, long timestamp,
       String message) {
+    if (_logPath == null) {
+      return;
+    }
     Date time = new Date(timestamp);
     PrintWriter writer = getWriter(trainReportingNumber, time,
         _pathsByTrainReportingNumber);
@@ -71,6 +75,9 @@ public class NarrativeService {
   }
 
   public void addMessage(TrainInstance instance, String message) {
+    if (_logPath == null) {
+      return;
+    }
     Date time = new Date(instance.getLastUpdateTime());
     PrintWriter writer = getWriter(instance.getTrainId(), time, _pathsByTrainId);
     writer.println(_format.format(time) + " - " + _currentFile + " - "

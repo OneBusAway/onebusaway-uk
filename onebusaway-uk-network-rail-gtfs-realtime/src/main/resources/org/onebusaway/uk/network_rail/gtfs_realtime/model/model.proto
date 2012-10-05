@@ -1,0 +1,60 @@
+syntax = "proto2";
+
+option java_package = "org.onebusaway.uk.network_rail.gtfs_realtime.model";
+option java_outer_classname = "SerializedNarrative";
+package onebusaway_uk;
+
+message TrainInstance {
+  optional string trainReportingNumber = 3;
+  optional string trainId = 1;
+  optional string trainUid = 2;
+  repeated Event event = 4;
+}
+
+message Event {
+  required uint64 timestamp = 1;
+  optional string source = 2;
+  
+  
+  optional TrainMovementEvent train_movement = 4;
+  
+  optional BerthStepEvent berth_step = 3;
+  optional BerthCancelEvent berth_cancel = 5;
+  optional BerthInterposeEvent berth_interpose = 6;
+  optional BerthHeartbeatEvent berth_heartbeat = 7;
+}
+
+message BerthStepEvent {
+  required string fromBerthId = 1;
+  required string toBerthId = 2;  
+}
+
+message BerthCancelEvent {
+  required string fromBerthId = 1;
+}
+
+message BerthInterposeEvent {
+  required string toBerthId = 1;
+}
+
+message BerthHeartbeatEvent {
+  
+}
+
+message TrainMovementEvent {
+  enum Type {
+    ACTIVATION = 1;
+    CANCELLATION = 2;
+    MOVEMENT = 3;
+    UNIDENTIFIED_TRAIN = 4;
+    REINSTATEMENT = 5;
+    CHANGE_OF_ORIGIN = 6;
+    CHANGE_OF_IDENTITY = 7;
+    CHANGE_OF_LOCATION = 8;
+  }
+  optional Type type = 1;
+  optional string trainId = 2;
+  optional string trainUid = 3;
+  optional uint32 stanoxId = 4;
+  optional string eventSource = 5;
+}

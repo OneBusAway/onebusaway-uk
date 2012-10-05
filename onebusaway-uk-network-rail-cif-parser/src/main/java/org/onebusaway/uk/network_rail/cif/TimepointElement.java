@@ -161,7 +161,36 @@ public abstract class TimepointElement extends CifElement implements
   public void setPerformanceAllowance(int performanceAllowance) {
     this.performanceAllowance = performanceAllowance;
   }
+  
 
+  public int getBestArrivalTime() {
+    if (scheduledArrivalTime != 0) {
+      return scheduledArrivalTime;
+    }
+    if (publicArrivalTime != 0) {
+      return publicArrivalTime;
+    }
+    return 0;
+  }
+
+  public int getBestDepartureTime() {
+    if (scheduledDepartureTime != 0) {
+      return scheduledDepartureTime;
+    }
+    if (publicDepartureTime != 0) {
+      return publicDepartureTime;
+    }
+    return 0;
+  }
+  
+  public int getBestTime() {
+    int t = getBestArrivalTime();
+    if (t != 0) {
+      return t;
+    }
+    return getBestDepartureTime();
+  }
+  
   @Override
   public String toString() {
     return tiploc +":" + publicArrivalTime;

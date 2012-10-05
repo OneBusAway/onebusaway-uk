@@ -1,17 +1,17 @@
 /**
  * Copyright (C) 2012 Google, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime;
 
@@ -51,6 +51,7 @@ import org.onebusaway.uk.atoc.timetable_parser.TimetableBundle;
 import org.onebusaway.uk.network_rail.cif.BasicScheduleElement;
 import org.onebusaway.uk.network_rail.cif.TimepointElement;
 import org.onebusaway.uk.network_rail.cif.TiplocInsertElement;
+import org.onebusaway.uk.network_rail.gtfs_realtime.instance.TrainInstance;
 import org.onebusaway.uk.network_rail.gtfs_realtime.model.BerthCancelMessage;
 import org.onebusaway.uk.network_rail.gtfs_realtime.model.BerthHeartbeatMessage;
 import org.onebusaway.uk.network_rail.gtfs_realtime.model.BerthInterposeMessage;
@@ -79,7 +80,8 @@ import com.google.transit.realtime.GtfsRealtime.TripUpdate.StopTimeUpdate;
 import com.google.transit.realtime.GtfsRealtime.VehicleDescriptor;
 
 @Singleton
-public class GtfsRealtimeService implements StatusProviderService {
+public class GtfsRealtimeService implements StatusProviderService,
+    MessageHandler {
 
   private static final Logger _log = LoggerFactory.getLogger(GtfsRealtimeService.class);
 
@@ -132,9 +134,9 @@ public class GtfsRealtimeService implements StatusProviderService {
    */
   private int _trainMovemenExpirationTimeInSeconds = 60 * 60;
 
-  public GtfsRealtimeService() {
-    _gson = new GsonBuilder().setFieldNamingPolicy(
-        FieldNamingPolicy.LOWER_CASE_WITH_UNDERSCORES).create();
+  @Inject
+  public void setGson(Gson gson) {
+    _gson = gson;
   }
 
   @Inject
@@ -200,6 +202,7 @@ public class GtfsRealtimeService implements StatusProviderService {
         _stanoxByBerthId.put(areaId + "_" + from, stanox);
         _stanoxByBerthId.put(areaId + "_" + to, stanox);
       }
+      reader.close();
     }
     if (_statePath != null) {
       reloadState();
@@ -210,7 +213,8 @@ public class GtfsRealtimeService implements StatusProviderService {
     _log.info("startup complete");
   }
 
-  public void processMessages(EMessageType messageType, String jsonMessage)
+  @Override
+  public void processMessage(long timestamp, EMessageType messageType, String jsonMessage, String source)
       throws IOException {
     if (!jsonMessage.startsWith("[")) {
       return;
@@ -265,10 +269,6 @@ public class GtfsRealtimeService implements StatusProviderService {
 
     _mostRecentTimestamp = Long.parseLong(message.getHeader().getMsgQueueTimestamp());
 
-    if (message.getBody().getTrainId().equals("872E97MX30")) {
-      System.out.println("here");
-    }
-
     switch (msgType) {
       case ACTIVATION:
         handleActivation(message);
@@ -314,8 +314,7 @@ public class GtfsRealtimeService implements StatusProviderService {
     c.set(Calendar.MILLISECOND, 0);
     long serviceDate = c.getTimeInMillis();
 
-    TrainInstance instance = new TrainInstance(trainId, schedule, serviceDate,
-        timestamp);
+    TrainInstance instance = new TrainInstance(trainId, serviceDate);
 
     fillTimepointsForTrainInstance(instance);
 
@@ -378,7 +377,7 @@ public class GtfsRealtimeService implements StatusProviderService {
       _statisticsService.incrementEmptyLocStanoxCount();
     }
     int stanox = Integer.parseInt(body.getLocStanox());
-    TimepointElement timepoint = instance.advanceToStanox(stanox);
+    TimepointElement timepoint = null; // what?
     if (timepoint == null) {
       _statisticsService.incrementUnknownStanoxCount();
       return;
@@ -447,8 +446,12 @@ public class GtfsRealtimeService implements StatusProviderService {
     if (!trainId.equals(revisedTrainId)) {
       TrainInstance train = _trainsById.remove(trainId);
       if (train != null) {
+        throw new UnsupportedOperationException();
+        
+        /*
         train = new TrainInstance(revisedTrainId, train);
         _trainsById.put(revisedTrainId, train);
+        */
       }
     }
   }
@@ -474,7 +477,15 @@ public class GtfsRealtimeService implements StatusProviderService {
     }
   }
 
+  private Set<String> _berthIds = new HashSet<String>();
+
   private void processBerthStepMessage(BerthStepMessage step) {
+    if (_berthIds.add(step.getAreaId() + "_" + step.getFrom())
+        || _berthIds.add(step.getAreaId() + "_" + step.getTo())) {
+      if (_berthIds.size() % 1000 == 0) {
+        _log.info("berth ids=" + _berthIds.size());
+      }
+    }
     _narrativeService.addMessage(step, "berth step: areaId=" + step.getAreaId()
         + " from=" + step.getFrom() + " to=" + step.getTo());
     TrainInstance instance = getTrainInstanceForShortTrainId(step,
@@ -571,15 +582,16 @@ public class GtfsRealtimeService implements StatusProviderService {
 
     if (matches.isEmpty()) {
       _noMatches++;
-      _log.warn("no matches");
+      // _log.warn("no matches");
     } else if (matches.size() > 1) {
       _multipleMatches++;
-      _log.warn("multiple matches");
+      // _log.warn("multiple matches");
     }
     _singleMatch++;
     TrainInstance instance = instances.iterator().next();
     instance.setLastUpdateTime(Long.parseLong(message.getTime()));
-    System.out.println(_noMatches + " " + _singleMatch + " " + _multipleMatches);
+    // System.out.println(_noMatches + " " + _singleMatch + " " +
+    // _multipleMatches);
     return instance;
   }
 
@@ -589,7 +601,10 @@ public class GtfsRealtimeService implements StatusProviderService {
     if (stanox != null) {
       String prefix = Integer.toString(stanox).substring(0, 2);
       for (TrainInstance instance : instances) {
-        if (instance.hasMatchingStanoxPrefix(prefix)) {
+        if (true) {
+          throw new UnsupportedOperationException();
+        }
+        if (false /*instance.hasMatchingStanoxPrefix(prefix)*/) {
           matches.add(instance);
         }
       }
@@ -600,7 +615,10 @@ public class GtfsRealtimeService implements StatusProviderService {
     Iterator<TrainInstance> it = _trainsById.values().iterator();
     while (it.hasNext()) {
       TrainInstance instance = it.next();
-      int timeout = instance.hasMoved() ? _trainMovemenExpirationTimeInSeconds
+      if (true) {
+        throw new UnsupportedOperationException();
+      }
+      int timeout = false /*instance.hasMoved()*/ ? _trainMovemenExpirationTimeInSeconds
           : _trainActivationExpirationTimeInSeconds;
       if (_mostRecentTimestamp > instance.getLastUpdateTime() + timeout * 1000) {
         it.remove();
@@ -690,10 +708,11 @@ public class GtfsRealtimeService implements StatusProviderService {
           continue;
         }
         TrainInstance instance = new TrainInstance(state.getTrainId(),
-            schedule, state.getServiceDate(), state.getLastUpdateTimestamp());
+            state.getServiceDate());
         fillTimepointsForTrainInstance(instance);
         _trainsById.put(state.getTrainId(), instance);
       }
+      in.close();
     } catch (Exception ex) {
       throw new IllegalStateException("error loading state from " + _statePath,
           ex);
@@ -735,4 +754,5 @@ public class GtfsRealtimeService implements StatusProviderService {
       }
     }
   }
+
 }

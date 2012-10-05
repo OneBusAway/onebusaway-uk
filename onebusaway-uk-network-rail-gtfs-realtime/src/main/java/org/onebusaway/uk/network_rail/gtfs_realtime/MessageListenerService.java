@@ -1,25 +1,26 @@
 /**
  * Copyright (C) 2012 Google, Inc.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- *         http://www.apache.org/licenses/LICENSE-2.0
- *
+ * 
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not
+ * use this file except in compliance with the License. You may obtain a copy of
+ * the License at
+ * 
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * 
  * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
+ * distributed under the License is distributed on an "AS IS" BASIS, WITHOUT
+ * WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. See the
+ * License for the specific language governing permissions and limitations under
+ * the License.
  */
 package org.onebusaway.uk.network_rail.gtfs_realtime;
 
+import java.io.IOException;
 import java.net.SocketTimeoutException;
 import java.util.Map;
-import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 import javax.annotation.PostConstruct;
 import javax.annotation.PreDestroy;
@@ -45,7 +46,7 @@ public class MessageListenerService {
 
   private LoggingService _loggingService;
 
-  private StompConnection _connection = new StompConnection();
+  private StompConnection _connection = null;
 
   private String _host = "datafeeds.networkrail.co.uk";
 
@@ -55,11 +56,11 @@ public class MessageListenerService {
 
   private String _password;
 
-  private ExecutorService _executor;
+  private ScheduledExecutorService _executor;
 
-  private Future<?> _task;
+  private int _connectionErrorCount = 0;
 
-  private boolean _enabled = false;
+  private boolean _enabled = true;
 
   @Inject
   public void setGtfsRealtimeService(GtfsRealtimeService gtfsRealtimeService) {
@@ -86,10 +87,26 @@ public class MessageListenerService {
   @PostConstruct
   public void start() throws Exception {
     if (!_enabled) {
-      _log.info("stop connection disabled");
+      _log.info("stomp connection disabled");
       return;
     }
-    _log.info("opening stop connection");
+
+    _executor = Executors.newSingleThreadScheduledExecutor();
+    _executor.submit(new ConnectionTask());
+  }
+
+  @PreDestroy
+  public void stop() {
+    if (_executor != null) {
+      _executor.shutdownNow();
+      _executor = null;
+    }
+    disconnect();
+  }
+
+  private void connect() throws Exception {
+    _log.info("opening stomp connection");
+    _connection = new StompConnection();
     _connection.open(_host, _port);
     _connection.connect(_username, _password);
 
@@ -97,27 +114,13 @@ public class MessageListenerService {
     _connection.subscribe(TOPIC_TD, Subscribe.AckModeValues.CLIENT);
 
     _connection.begin("tx2");
-
-    _executor = Executors.newSingleThreadExecutor();
-    _task = _executor.submit(new MessageProcessor());
     _log.info("connection open");
   }
 
-  @PreDestroy
-  public void stop() {
-
-    if (_task != null) {
-      _task.cancel(true);
-      _task = null;
-    }
-
-    if (_executor != null) {
-      _executor.shutdownNow();
-      _executor = null;
-    }
-
+  private void disconnect() {
     if (_connection != null) {
       try {
+        _log.info("closing stomp connection");
         _connection.disconnect();
         _connection = null;
       } catch (Exception ex) {
@@ -126,23 +129,26 @@ public class MessageListenerService {
     }
   }
 
-  private void processNextMessage() throws Exception {
+  private MessagePayload getNextMessage() throws Exception {
     StompFrame message = null;
     try {
       message = _connection.receive();
     } catch (SocketTimeoutException ex) {
       _log.warn("timeout");
-      return;
+      return null;
     }
 
-    EMessageType messageType = getMessageTypeForMessage(message);
-    String body = message.getBody();
+    MessagePayload payload = new MessagePayload();
+    payload.type = getMessageTypeForMessage(message);
+    payload.body = message.getBody();
 
     _connection.ack(message, "tx2");
+    return payload;
+  }
 
-    _loggingService.logMessage(messageType, body);
-    _gtfsRealtimeService.processMessages(messageType, body);
-
+  private void processNextMessage(long timestamp, MessagePayload payload) throws IOException {
+    _loggingService.logMessage(timestamp, payload.type, payload.body);
+    _gtfsRealtimeService.processMessage(timestamp, payload.type, payload.body, null);
   }
 
   private EMessageType getMessageTypeForMessage(StompFrame frame) {
@@ -162,19 +168,56 @@ public class MessageListenerService {
     }
   }
 
+  private static class MessagePayload {
+    private EMessageType type;
+    private String body;
+  }
+
+  private class ConnectionTask implements Runnable {
+
+    @Override
+    public void run() {
+      try {
+        disconnect();
+        connect();
+        _executor.submit(new MessageProcessor());
+      } catch (Exception ex) {
+        if (_connectionErrorCount == 0) {
+          _log.error("error connecting", ex);
+        } else {
+          _log.error("error connecting: errorCount=" + _connectionErrorCount);
+        }
+        _connectionErrorCount++;
+        _executor.schedule(new ConnectionTask(), 60, TimeUnit.SECONDS);
+      }
+    }
+  }
+
   private class MessageProcessor implements Runnable {
 
     @Override
     public void run() {
 
       while (!Thread.interrupted()) {
+
+        MessagePayload payload = null;
+
         try {
-          processNextMessage();
+          payload = getNextMessage();
         } catch (Exception ex) {
-          _log.error("error proccessing message", ex);
+          _log.error("error grabbing message", ex);
+          _executor.submit(new ConnectionTask());
+          return;
+        }
+
+        if (payload != null) {
+          try {
+            processNextMessage(System.currentTimeMillis(), payload);
+          } catch (IOException ex) {
+            _log.error("error proccessing message", ex);
+          }
         }
       }
     }
-
   }
 }
