@@ -349,9 +349,12 @@ public class AtcoCifToGtfsConverter {
       if (operator != null) {
         agency.setName(operator.getShortFormName());
         agency.setPhone(operator.getEnquiryPhone());
-      } else {
-        agency.setName(_agencyName);
-        agency.setPhone(_agencyPhone);
+      }
+      if(agency.getName() == null || agency.getName().isEmpty()) {
+    	  agency.setName(_agencyName);  
+      }
+      if( agency.getPhone() == null || agency.getPhone().isEmpty()) {
+    	  agency.setPhone(_agencyPhone);    	  
       }
       _dao.saveEntity(agency);
     }
