@@ -52,7 +52,11 @@ java -jar onebusaway-uk-atco-cif-to-gtfs-converter.jar [args] atco_cif_input_pat
   The following arguments can be used to control other aspects of the feed
   conversion:
   
-  * <<<--vehicleType=...>>> - specify a default {{{https://developers.google.com/transit/gtfs/reference#routes_route_type_field}GTFS vehicle type}} for the feed 
+  * <<<--vehicleType=...>>> - specify a default {{{https://developers.google.com/transit/gtfs/reference#routes_route_type_field}GTFS vehicle type}} for the feed
+  
+  * <<<--routeLongNameFromDirectionId=...>>> - if specified, the {{{https://developers.google.com/transit/gtfs/reference#routes_route_long_name_field}GTFS routes.txt route_long_name}}
+    will be set using QD Route Direction records for a particular route.  We use the QD
+    record with the direction identifier specified as the argument.
   
   * <<<--pruneStopsWithNoLocationInfo>>> - prune stops with no location information
   
