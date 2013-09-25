@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.onebusaway.uk.atco_cif;
+package org.onebusaway.uk.atco_cif.extensions;
 
-public class AdditionalLocationElement extends AtcoCifElement implements LocationProvider {
+import org.onebusaway.uk.atco_cif.AtcoCifElement;
+import org.onebusaway.uk.atco_cif.LocationProvider;
+
+public class NationalExpressLocationGeoDetailElement extends AtcoCifElement
+    implements LocationProvider {
+
+  public NationalExpressLocationGeoDetailElement() {
+    super(Type.EXTENSION);
+  }
 
   private String locationId;
 
   private double lat;
 
   private double lon;
-
-  public AdditionalLocationElement() {
-    super(AtcoCifElement.Type.ADDITIONAL_LOCATION);
-  }
 
   public String getLocationId() {
     return locationId;

@@ -19,17 +19,43 @@ import org.onebusaway.uk.parser.ContentHandler;
 import org.onebusaway.uk.parser.ExtensionParser;
 import org.onebusaway.uk.parser.ParserInstance;
 
-public class NationalExpressLocationNameParser implements ExtensionParser {
+public class NationalExpressExtensionParser implements ExtensionParser {
 
   @Override
   public boolean handleExtensionRecordType(String typeValue,
       ParserInstance parser, ContentHandler handler) {
+    if (typeValue.equals("ZG")) {
+      parseLocationGeographicDetail(parser, handler);
+    } else if (typeValue.equals("ZN")) {
+      parseLocationNameElement(parser, handler);
+    } else {
+      throw new IllegalStateException("unknown type format=" + typeValue);
+    }
+    return true;
+  }
+
+  private void parseLocationGeographicDetail(ParserInstance parser,
+      ContentHandler handler) {
+    NationalExpressLocationGeoDetailElement element = parser.element(new NationalExpressLocationGeoDetailElement());
+    parser.pop(1);
+    element.setLocationId(parser.pop(12));
+    String latValue = parser.pop(10);
+    String lonValue = parser.pop(11);
+    if (latValue.isEmpty() || lonValue.isEmpty()) {
+      return;
+    }
+    element.setLat(Double.parseDouble(latValue));
+    element.setLon(Double.parseDouble(lonValue));
+    parser.fireElement(element, handler);
+  }
+
+  private void parseLocationNameElement(ParserInstance parser,
+      ContentHandler handler) {
     NationalExpressLocationNameElement element = parser.element(new NationalExpressLocationNameElement());
     parser.pop(1);
     element.setLocationId(parser.pop(12));
     element.setShortName(parser.pop(50));
     element.setFullName(parser.pop(160));
     parser.fireElement(element, handler);
-    return true;
   }
 }

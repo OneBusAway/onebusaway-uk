@@ -66,8 +66,8 @@ java -jar onebusaway-uk-atco-cif-to-gtfs-converter.jar [args] atco_cif_input_pat
   additional location (QB) records have been multiplied by some scale factor,
   specify it here
   
-  * <<<--nationalExpressLocationNameExtension>>> - if specified, will look for National
-  Express-specific ZN extension records in the CIF file with longer location names 
+  * <<<--nationalExpressExtensions>>> - if specified, will look for National
+  Express-specific extension records in the CIF file. 
   
   []
 
