@@ -641,8 +641,8 @@ public class AtcoCifToGtfsConverter {
       }
       String name = location.getName();
       NationalExpressLocationNameElement nxNameElement = _nxLocationNamesById.get(locationId);
-      if (nxNameElement != null && !nxNameElement.getFullName().isEmpty()) {
-        name = nxNameElement.getFullName();
+      if (nxNameElement != null && !nxNameElement.getShortName().isEmpty()) {
+        name = nxNameElement.getShortName();
       }
 
       stop = new Stop();
