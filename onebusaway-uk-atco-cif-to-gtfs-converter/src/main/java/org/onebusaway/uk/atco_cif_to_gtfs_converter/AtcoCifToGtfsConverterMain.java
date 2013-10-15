@@ -162,8 +162,9 @@ public class AtcoCifToGtfsConverterMain {
     }
     if (cli.hasOption(ARG_NATIONAL_EXPRESS_EXTENSIONS)) {
       NationalExpressExtensionParser parser = new NationalExpressExtensionParser();
-      converter.getParser().addExtension("ZG", parser);
-      converter.getParser().addExtension("ZN", parser);
+      for (String extenstionType : parser.getSupportedTypes()) {
+        converter.getParser().addExtension(extenstionType, parser);
+      }
     }
     if (cli.hasOption(ARG_GREATER_MANCHESTER_EXTENSIONS)) {
       GreaterManchesterParser parser = new GreaterManchesterParser();

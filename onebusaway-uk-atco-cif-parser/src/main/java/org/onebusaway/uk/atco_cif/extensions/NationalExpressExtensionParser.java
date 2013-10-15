@@ -15,19 +15,36 @@
  */
 package org.onebusaway.uk.atco_cif.extensions;
 
+import java.util.Arrays;
+import java.util.List;
+
 import org.onebusaway.uk.parser.ContentHandler;
 import org.onebusaway.uk.parser.ExtensionParser;
 import org.onebusaway.uk.parser.ParserInstance;
 
 public class NationalExpressExtensionParser implements ExtensionParser {
 
+  public List<String> getSupportedTypes() {
+    return Arrays.asList("ZB", "ZM", "ZN", "ZO", "ZP", "ZR", "ZS");
+  }
+
   @Override
   public boolean handleExtensionRecordType(String typeValue,
       ParserInstance parser, ContentHandler handler) {
-    if (typeValue.equals("ZG")) {
+    if (typeValue.equals("ZB")) {
       parseLocationGeographicDetail(parser, handler);
+    } else if (typeValue.equals("ZM")) {
+      // Master Flight record
     } else if (typeValue.equals("ZN")) {
       parseLocationNameElement(parser, handler);
+    } else if (typeValue.equals("ZO")) {
+      parseOperatorElement(parser, handler);
+    } else if (typeValue.equals("ZP")) {
+      // Stop Mapping record
+    } else if (typeValue.equals("ZR")) {
+      parserRouteDetailsElement(parser, handler);
+    } else if (typeValue.equals("ZS")) {
+      // Service Details record
     } else {
       throw new IllegalStateException("unknown type format=" + typeValue);
     }
@@ -56,6 +73,32 @@ public class NationalExpressExtensionParser implements ExtensionParser {
     element.setLocationId(parser.pop(12));
     element.setShortName(parser.pop(50));
     element.setFullName(parser.pop(160));
+    parser.fireElement(element, handler);
+  }
+
+  private void parseOperatorElement(ParserInstance parser,
+      ContentHandler handler) {
+    NationalExpressOperatorElement element = parser.element(new NationalExpressOperatorElement());
+    parser.pop(1); // Transaction Type
+    element.setId(parser.pop(4));
+    element.setParentId(parser.pop(4));
+    element.setParentName(parser.pop(48));
+    element.setMarketingName(parser.pop(48));
+    parser.pop(1); // Third-party indicator
+    parser.pop(1); // Eurolines indicator
+    element.setUrl(parser.pop(100));
+    parser.fireElement(element, handler);
+  }
+
+  private void parserRouteDetailsElement(ParserInstance parser,
+      ContentHandler handler) {
+    NationalExpressRouteDetailsElement element = parser.element(new NationalExpressRouteDetailsElement());
+    parser.pop(1); // Transaction Type
+    element.setOperatorId(parser.pop(4));
+    element.setRouteId(parser.pop(4));
+    element.setDirectionId(parser.pop(1));
+    element.setRouteShortName(parser.pop(68));
+    element.setRouteUrl(parser.pop(100));
     parser.fireElement(element, handler);
   }
 }

@@ -61,6 +61,8 @@ import org.onebusaway.uk.atco_cif.RouteDescriptionElement;
 import org.onebusaway.uk.atco_cif.VehicleTypeElement;
 import org.onebusaway.uk.atco_cif.extensions.NationalExpressLocationGeoDetailElement;
 import org.onebusaway.uk.atco_cif.extensions.NationalExpressLocationNameElement;
+import org.onebusaway.uk.atco_cif.extensions.NationalExpressOperatorElement;
+import org.onebusaway.uk.atco_cif.extensions.NationalExpressRouteDetailsElement;
 import org.onebusaway.uk.atco_cif.extensions.greater_manchester.GreaterManchesterTimetableRowListElement;
 import org.onebusaway.uk.naptan.csv.NaPTANStop;
 import org.onebusaway.uk.parser.ContentHandler;
@@ -107,6 +109,8 @@ public class AtcoCifToGtfsConverter {
   private Map<String, NationalExpressLocationNameElement> _nxLocationNamesById = new HashMap<String, NationalExpressLocationNameElement>();
 
   private Map<String, NationalExpressLocationGeoDetailElement> _nxLocationGeoDetailById = new HashMap<String, NationalExpressLocationGeoDetailElement>();
+
+  private Map<String, NationalExpressOperatorElement> _nxOperatorsById = new HashMap<String, NationalExpressOperatorElement>();
 
   private Map<String, VehicleTypeElement> _vehicleTypesById = new HashMap<String, VehicleTypeElement>();
 
@@ -272,9 +276,9 @@ public class AtcoCifToGtfsConverter {
         AgencyAndId routeId = trip.getRoute().getId();
         RouteMetadata metadata = getMetadataForRouteId(routeId);
 
-        RouteDescriptionElement routeDescription = metadata.getRouteDescriptionForDirection(journey.getRouteDirection());
-        if (routeDescription != null) {
-          trip.setTripHeadsign(routeDescription.getRouteDescription());
+        String directionName = metadata.getDirectionNameForDirectionId(journey.getRouteDirection());
+        if (!isEmpty(directionName)) {
+          trip.setTripHeadsign(directionName);
         }
         Integer directionId = metadata.getDirectionIdForDirection(journey.getRouteDirection());
         if (directionId != null) {
@@ -327,10 +331,9 @@ public class AtcoCifToGtfsConverter {
       route.setType(getRouteTypeForJourney(journey));
       RouteMetadata metaData = _routeMetadataById.get(routeId);
       if (metaData != null) {
-        RouteDescriptionElement desc = metaData.getRouteDescriptionForDirection(_routeLongNameFromDirectionId);
-        if (desc != null && desc.getRouteDescription() != null
-            && !desc.getRouteDescription().isEmpty()) {
-          route.setLongName(desc.getRouteDescription());
+        String longName = metaData.getRouteLongNameForDirectionId(_routeLongNameFromDirectionId);
+        if (longName != null) {
+          route.setLongName(longName);
         }
       }
       _dao.saveEntity(route);
@@ -339,13 +342,15 @@ public class AtcoCifToGtfsConverter {
   }
 
   private AgencyAndId getRouteIdForJourney(JourneyHeaderElement journey) {
-    String operatorId = journey.getOperatorId();
+    return getRouteId(journey.getOperatorId(), journey.getRouteIdentifier());
+  }
+
+  private AgencyAndId getRouteId(String operatorId, String routeId) {
     // Note that we include the operator id in the id portion as well
     // because
     // the route identifiers are not unique by themselves in the output
     // GTFS.
-    return new AgencyAndId(operatorId, operatorId + "-"
-        + journey.getRouteIdentifier());
+    return new AgencyAndId(operatorId, operatorId + "-" + routeId);
   }
 
   private Agency getAgencyForId(String id) {
@@ -353,21 +358,36 @@ public class AtcoCifToGtfsConverter {
     if (agency == null) {
       agency = new Agency();
       agency.setId(id);
-
-      OperatorElement operator = _operatorsById.get(id);
       agency.setTimezone(_agencyTimezone);
-      agency.setUrl(_agencyUrl);
       agency.setLang(_agencyLang);
 
+      OperatorElement operator = _operatorsById.get(id);
       if (operator != null) {
-        agency.setName(operator.getShortFormName());
-        agency.setPhone(operator.getEnquiryPhone());
+        if (!isEmpty(operator.getShortFormName())) {
+          agency.setName(operator.getShortFormName());
+        }
+        if (!isEmpty(operator.getEnquiryPhone())) {
+          agency.setPhone(operator.getEnquiryPhone());
+        }
       }
-      if (agency.getName() == null || agency.getName().isEmpty()) {
+      NationalExpressOperatorElement nxOperator = _nxOperatorsById.get(id);
+      if (nxOperator != null) {
+        if (!isEmpty(nxOperator.getMarketingName())) {
+          agency.setName(nxOperator.getMarketingName());
+        }
+        if (!isEmpty(nxOperator.getUrl())) {
+          agency.setUrl(nxOperator.getUrl());
+        }
+      }
+
+      if (isEmpty(agency.getName())) {
         agency.setName(_agencyName);
       }
-      if (agency.getPhone() == null || agency.getPhone().isEmpty()) {
+      if (isEmpty(agency.getPhone())) {
         agency.setPhone(_agencyPhone);
+      }
+      if (isEmpty(agency.getUrl())) {
+        agency.setUrl(_agencyUrl);
       }
       _dao.saveEntity(agency);
     }
@@ -695,6 +715,10 @@ public class AtcoCifToGtfsConverter {
     return new AgencyAndId(_agencyId, id);
   }
 
+  private static final boolean isEmpty(String value) {
+    return value == null || value.isEmpty();
+  }
+
   private class HandlerImpl implements ContentHandler {
 
     @Override
@@ -750,6 +774,15 @@ public class AtcoCifToGtfsConverter {
         NationalExpressLocationGeoDetailElement nxGeoDetailElement = (NationalExpressLocationGeoDetailElement) element;
         _nxLocationGeoDetailById.put(nxGeoDetailElement.getLocationId(),
             nxGeoDetailElement);
+      } else if (element instanceof NationalExpressOperatorElement) {
+        NationalExpressOperatorElement nxElement = (NationalExpressOperatorElement) element;
+        _nxOperatorsById.put(nxElement.getId(), nxElement);
+      } else if (element instanceof NationalExpressRouteDetailsElement) {
+        NationalExpressRouteDetailsElement details = (NationalExpressRouteDetailsElement) element;
+        AgencyAndId routeId = getRouteId(details.getOperatorId(),
+            details.getRouteId());
+        RouteMetadata metadata = getMetadataForRouteId(routeId);
+        metadata.addNXRouteDetails(details);
       } else if (element instanceof GreaterManchesterTimetableRowListElement) {
         GreaterManchesterTimetableRowListElement rowList = (GreaterManchesterTimetableRowListElement) element;
         _greaterManchesterRowListsByLocationId.put(
