@@ -33,6 +33,8 @@ public class RouteMetadata {
 
   private Map<String, String> _routeLongNamesByDirectionId = new HashMap<String, String>();
 
+  private Map<String, String> _routeUrlsByDirectionId = new HashMap<String, String>();
+
   private Map<String, String> _directionNamesByDirectionId = new HashMap<String, String>();
 
   public void addDirection(String routeDirection) {
@@ -46,6 +48,10 @@ public class RouteMetadata {
 
   public String getRouteLongNameForDirectionId(String directionId) {
     return _routeLongNamesByDirectionId.get(directionId);
+  }
+
+  public String getRouteUrlForDirectionId(String directionId) {
+    return _routeUrlsByDirectionId.get(directionId);
   }
 
   public String getDirectionNameForDirectionId(String directionId) {
@@ -65,6 +71,10 @@ public class RouteMetadata {
     if (!isEmpty(element.getRouteShortName())) {
       _directionNamesByDirectionId.put(element.getDirectionId(),
           element.getRouteShortName());
+    }
+    if (!isEmpty(element.getRouteUrl())) {
+      _routeUrlsByDirectionId.put(element.getDirectionId(),
+          element.getRouteUrl());
     }
   }
 

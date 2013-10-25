@@ -126,7 +126,7 @@ public class AtcoCifToGtfsConverter {
 
   private Set<String> _pruneStopsWithPrefixes = Collections.emptySet();
 
-  private String _routeLongNameFromDirectionId;
+  private List<String> _preferredDirectionIdsForRouteDetails = Collections.emptyList();
 
   private File _naptanCsvPath;
 
@@ -187,9 +187,8 @@ public class AtcoCifToGtfsConverter {
     _pruneStopsWithPrefixes = pruneStopsWithPrefixes;
   }
 
-  public void setRouteLongNameFromDirectionId(
-      String routeLongNameFromDirectionId) {
-    _routeLongNameFromDirectionId = routeLongNameFromDirectionId;
+  public void setPreferredDirectionIdsForRouteDetails(List<String> ids) {
+    _preferredDirectionIdsForRouteDetails = ids;
   }
 
   public void setNaptanCsvPath(File naptanCsvPath) {
@@ -331,9 +330,19 @@ public class AtcoCifToGtfsConverter {
       route.setType(getRouteTypeForJourney(journey));
       RouteMetadata metaData = _routeMetadataById.get(routeId);
       if (metaData != null) {
-        String longName = metaData.getRouteLongNameForDirectionId(_routeLongNameFromDirectionId);
-        if (longName != null) {
-          route.setLongName(longName);
+        for (String id : _preferredDirectionIdsForRouteDetails) {
+          String longName = metaData.getRouteLongNameForDirectionId(id);
+          if (longName != null) {
+            route.setLongName(longName);
+            break;
+          }
+        }
+        for (String id : _preferredDirectionIdsForRouteDetails) {
+          String routeUrl = metaData.getRouteUrlForDirectionId(id);
+          if (routeUrl != null) {
+            route.setUrl(routeUrl);
+            break;
+          }
         }
       }
       _dao.saveEntity(route);
