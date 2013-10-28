@@ -126,6 +126,8 @@ public class AtcoCifToGtfsConverter {
 
   private Set<String> _pruneStopsWithPrefixes = Collections.emptySet();
 
+  private boolean _pruneTripsWithMissingStops = false;
+
   private List<String> _preferredDirectionIdsForRouteDetails = Collections.emptyList();
 
   private File _naptanCsvPath;
@@ -185,6 +187,10 @@ public class AtcoCifToGtfsConverter {
 
   public void setPruneStopsWithPrefixes(Set<String> pruneStopsWithPrefixes) {
     _pruneStopsWithPrefixes = pruneStopsWithPrefixes;
+  }
+
+  public void setPruneTripsWithMissingStops(boolean pruneTripsWithMissingStops) {
+    _pruneTripsWithMissingStops = pruneTripsWithMissingStops;
   }
 
   public void setPreferredDirectionIdsForRouteDetails(List<String> ids) {
@@ -284,8 +290,9 @@ public class AtcoCifToGtfsConverter {
           trip.setDirectionId(directionId.toString());
         }
 
-        constructTimepoints(journey, trip);
-        _dao.saveEntity(trip);
+        if (constructTimepoints(journey, trip)) {
+          _dao.saveEntity(trip);
+        }
       }
     }
   }
@@ -519,12 +526,20 @@ public class AtcoCifToGtfsConverter {
     return suffix;
   }
 
-  private void constructTimepoints(JourneyHeaderElement journey, Trip trip) {
+  private boolean constructTimepoints(JourneyHeaderElement journey, Trip trip) {
 
     normalizeTimes(journey);
 
     boolean first = true;
-    boolean prunedStopWithoutLocationInfo = false;
+
+    for (JourneyTimePointElement timePoint : journey.getTimePoints()) {
+      String stopId = timePoint.getLocationId();
+      Stop stop = findStop(stopId);
+      if (stop == null && _pruneTripsWithMissingStops) {
+        _prunedTripsCount++;
+        return false;
+      }
+    }
 
     for (JourneyTimePointElement timePoint : journey.getTimePoints()) {
       String stopId = timePoint.getLocationId();
@@ -536,7 +551,6 @@ public class AtcoCifToGtfsConverter {
        * stops.
        */
       if (stop == null) {
-        prunedStopWithoutLocationInfo = true;
         _prunedStopTimesCount++;
         continue;
       }
@@ -554,10 +568,7 @@ public class AtcoCifToGtfsConverter {
       _dao.saveEntity(stopTime);
       first = false;
     }
-
-    if (prunedStopWithoutLocationInfo) {
-      _prunedTripsCount++;
-    }
+    return true;
   }
 
   private void normalizeTimes(JourneyHeaderElement journey) {

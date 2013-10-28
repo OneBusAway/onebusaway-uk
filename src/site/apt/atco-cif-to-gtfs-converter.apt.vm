@@ -64,6 +64,8 @@ java -jar onebusaway-uk-atco-cif-to-gtfs-converter.jar [args] atco_cif_input_pat
   
   * <<<--pruneStopsWithPrefix=prefix>>> - prune stops with the specified stop id prefix
   
+  * <<<--pruneTripsWithMissingStops>>> - prune trips that have missing stops (aka stops that have been pruned)
+  
   * <<<--locationScaleFactor=factor>>> - if the northing and easting values for
   additional location (QB) records have been multiplied by some scale factor,
   specify it here

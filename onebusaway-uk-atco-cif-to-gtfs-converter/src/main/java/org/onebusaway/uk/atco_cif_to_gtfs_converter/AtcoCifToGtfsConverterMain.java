@@ -53,6 +53,8 @@ public class AtcoCifToGtfsConverterMain {
 
   private static final String ARG_PRUNE_STOPS_WITH_PREFIX = "pruneStopsWithPrefix";
 
+  private static final String ARG_PRUNE_TRIPS_WITH_MISSING_STOPS = "pruneTripsWithMissingStops";
+
   private static final String ARG_LOCATION_SCALE_FACTOR = "locationScaleFactor";
 
   private static final String ARG_PREFERRED_DIRECTION_IDS_FOR_ROUTE_DETAILs = "preferredDirectionIdsForRouteDetails";
@@ -140,6 +142,7 @@ public class AtcoCifToGtfsConverterMain {
       }
     }
     converter.setPruneStopsWithNoLocationInfo(cli.hasOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO));
+    converter.setPruneTripsWithMissingStops(cli.hasOption(ARG_PRUNE_TRIPS_WITH_MISSING_STOPS));
     if (cli.hasOption(ARG_LOCATION_SCALE_FACTOR)) {
       double locationScaleFactor = Double.parseDouble(cli.getOptionValue(ARG_LOCATION_SCALE_FACTOR));
       converter.getParser().setLocationScaleFactor(locationScaleFactor);
@@ -184,6 +187,7 @@ public class AtcoCifToGtfsConverterMain {
     options.addOption(ARG_VEHICLE_TYPE, true, "vehicle type");
     options.addOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO, false, "");
     options.addOption(ARG_PRUNE_STOPS_WITH_PREFIX, true, "");
+    options.addOption(ARG_PRUNE_TRIPS_WITH_MISSING_STOPS, false, "");
     options.addOption(ARG_LOCATION_SCALE_FACTOR, true, "");
     options.addOption(ARG_PREFERRED_DIRECTION_IDS_FOR_ROUTE_DETAILs, true, "");
     options.addOption(ARG_NAPTAN_CSV_PATH, true, "");
