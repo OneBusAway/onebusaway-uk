@@ -26,13 +26,41 @@ Args:
   GTFS feed:
    
     --vehicleType=...     specify a default GTFS route vehicle type for the feed
+ 
+ Advanced Options:
+ 
+  --preferredDirectionIdsForRouteDetails=...
+  
+    Specify as a comma-separated list of direction ids (eg. "IN,OUT") that will
+  be used to fill in additional details for GTFS routes.txt entries from ATCO-CIF 
+  route+direction specific records.  For example, the `route_long_name` field will
+  be set using QD Route Direction records for a particular route, trying each
+  specified direction id in turn until we find a usable value.
 
-  If you have stops without location information in your ATCO CIF feed, it is
-  possible to prune them from resulting GTFS feed, along with their stop times:
+  --keepStopsWithNoLocationInfo 
+
+    If specified, stops without location information in your ATCO CIF feed will
+  still be included in the GTFS output.  By default, they are pruned.  These
+  stops will have empty coordinates (0.0, 0.0).
   
-    --pruneStopsWithNoLocationInfo
+  --pruneStopsWithPrefix=...
     
-  It is also possible to prune stops that have a particular stop id prefix.
+    Prune stops that have the specified stop id prefix.
   
-    --pruneStopsWithPrefix=...
+  --keepTripsWithMissingStops  
+  
+    If specified, Trips that include pruned stops will be included in the GTFS
+  output.  Normally, they are excluded.
+  
+  --locationScaleFactor=...
+  
+    If the northing and easting values for additional location (QB) records have 
+  been multiplied by some scale factor, specify it with this flag so that the values
+  can be properly adjusted.
+    
+  --nationalExpressExtensions
+  
+    If specified, the converter will look for custom National Express ATCO CIF
+  records and use them to augment the GTFS feed.
+   locationScaleFactor 
   

@@ -122,11 +122,11 @@ public class AtcoCifToGtfsConverter {
 
   private GtfsRelationalDaoImpl _dao = new GtfsRelationalDaoImpl();
 
-  private boolean _pruneStopsWithNoLocationInfo = false;
+  private boolean _keepStopsWithNoLocationInfo = false;
 
   private Set<String> _pruneStopsWithPrefixes = Collections.emptySet();
 
-  private boolean _pruneTripsWithMissingStops = false;
+  private boolean _keepTripsWithMissingStops = false;
 
   private List<String> _preferredDirectionIdsForRouteDetails = Collections.emptyList();
 
@@ -180,17 +180,17 @@ public class AtcoCifToGtfsConverter {
     _vehicleType = vehicleType;
   }
 
-  public void setPruneStopsWithNoLocationInfo(
-      boolean pruneStopsWithNoLocationInfo) {
-    _pruneStopsWithNoLocationInfo = pruneStopsWithNoLocationInfo;
+  public void setKeepStopsWithNoLocationInfo(
+      boolean keepStopsWithNoLocationInfo) {
+    _keepStopsWithNoLocationInfo = keepStopsWithNoLocationInfo;
   }
 
   public void setPruneStopsWithPrefixes(Set<String> pruneStopsWithPrefixes) {
     _pruneStopsWithPrefixes = pruneStopsWithPrefixes;
   }
 
-  public void setPruneTripsWithMissingStops(boolean pruneTripsWithMissingStops) {
-    _pruneTripsWithMissingStops = pruneTripsWithMissingStops;
+  public void setKeepTripsWithMissingStops(boolean keepTripsWithMissingStops) {
+    _keepTripsWithMissingStops = keepTripsWithMissingStops;
   }
 
   public void setPreferredDirectionIdsForRouteDetails(List<String> ids) {
@@ -535,7 +535,7 @@ public class AtcoCifToGtfsConverter {
     for (JourneyTimePointElement timePoint : journey.getTimePoints()) {
       String stopId = timePoint.getLocationId();
       Stop stop = findStop(stopId);
-      if (stop == null && _pruneTripsWithMissingStops) {
+      if (stop == null && !_keepTripsWithMissingStops) {
         _prunedTripsCount++;
         return false;
       }
@@ -675,7 +675,7 @@ public class AtcoCifToGtfsConverter {
           _log.info("stop with no location: " + locationId);
           _prunedStopsWithNoLocationInfoCount++;
         }
-        if (_pruneStopsWithNoLocationInfo) {
+        if (!_keepStopsWithNoLocationInfo) {
           return null;
         }
       }

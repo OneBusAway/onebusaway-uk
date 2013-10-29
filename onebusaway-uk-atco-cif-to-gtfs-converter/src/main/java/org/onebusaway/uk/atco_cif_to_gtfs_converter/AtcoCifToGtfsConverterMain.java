@@ -49,11 +49,11 @@ public class AtcoCifToGtfsConverterMain {
 
   private static final String ARG_VEHICLE_TYPE = "vehicleType";
 
-  private static final String ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO = "pruneStopsWithNoLocationInfo";
+  private static final String ARG_KEEP_STOPS_WITH_NO_LOCATION_INFO = "keepStopsWithNoLocationInfo";
 
   private static final String ARG_PRUNE_STOPS_WITH_PREFIX = "pruneStopsWithPrefix";
 
-  private static final String ARG_PRUNE_TRIPS_WITH_MISSING_STOPS = "pruneTripsWithMissingStops";
+  private static final String ARG_KEEP_TRIPS_WITH_MISSING_STOPS = "keepTripsWithMissingStops";
 
   private static final String ARG_LOCATION_SCALE_FACTOR = "locationScaleFactor";
 
@@ -141,8 +141,8 @@ public class AtcoCifToGtfsConverterMain {
         }
       }
     }
-    converter.setPruneStopsWithNoLocationInfo(cli.hasOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO));
-    converter.setPruneTripsWithMissingStops(cli.hasOption(ARG_PRUNE_TRIPS_WITH_MISSING_STOPS));
+    converter.setKeepStopsWithNoLocationInfo(cli.hasOption(ARG_KEEP_STOPS_WITH_NO_LOCATION_INFO));
+    converter.setKeepTripsWithMissingStops(cli.hasOption(ARG_KEEP_TRIPS_WITH_MISSING_STOPS));
     if (cli.hasOption(ARG_LOCATION_SCALE_FACTOR)) {
       double locationScaleFactor = Double.parseDouble(cli.getOptionValue(ARG_LOCATION_SCALE_FACTOR));
       converter.getParser().setLocationScaleFactor(locationScaleFactor);
@@ -185,9 +185,9 @@ public class AtcoCifToGtfsConverterMain {
     options.addOption(ARG_AGENCY_TIMEZONE, true, "agency timezone");
     options.addOption(ARG_AGENCY_URL, true, "agency url");
     options.addOption(ARG_VEHICLE_TYPE, true, "vehicle type");
-    options.addOption(ARG_PRUNE_STOPS_WITH_NO_LOCATION_INFO, false, "");
+    options.addOption(ARG_KEEP_STOPS_WITH_NO_LOCATION_INFO, false, "");
     options.addOption(ARG_PRUNE_STOPS_WITH_PREFIX, true, "");
-    options.addOption(ARG_PRUNE_TRIPS_WITH_MISSING_STOPS, false, "");
+    options.addOption(ARG_KEEP_TRIPS_WITH_MISSING_STOPS, false, "");
     options.addOption(ARG_LOCATION_SCALE_FACTOR, true, "");
     options.addOption(ARG_PREFERRED_DIRECTION_IDS_FOR_ROUTE_DETAILS, true, "");
     options.addOption(ARG_NAPTAN_CSV_PATH, true, "");

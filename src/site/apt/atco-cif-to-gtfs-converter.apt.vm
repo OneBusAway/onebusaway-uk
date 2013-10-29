@@ -60,15 +60,15 @@ java -jar onebusaway-uk-atco-cif-to-gtfs-converter.jar [args] atco_cif_input_pat
     the <<<route_long_name>>> field will be set using QD Route Direction records for a
     particular route, trying each specified direction id in turn until we find a usable value.
   
-  * <<<--pruneStopsWithNoLocationInfo>>> - prune stops with no location information
+  * <<<--keepStopsWithNoLocationInfo>>> - keep stops with no location information.  They are pruned by default.
   
   * <<<--pruneStopsWithPrefix=prefix>>> - prune stops with the specified stop id prefix
   
-  * <<<--pruneTripsWithMissingStops>>> - prune trips that have missing stops (aka stops that have been pruned)
+  * <<<--keepTripsWithMissingStops>>> - keep trips that have missing stops (aka stops that have been pruned).  They are pruned by default.
   
   * <<<--locationScaleFactor=factor>>> - if the northing and easting values for
   additional location (QB) records have been multiplied by some scale factor,
-  specify it here
+  specify it here.
   
   * <<<--nationalExpressExtensions>>> - if specified, will look for National
   Express-specific extension records in the CIF file. 
