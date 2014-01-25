@@ -20,6 +20,8 @@ public class JourneyIntermediateElement extends JourneyTimePointElement {
   private int arrivalTime;
 
   private int departureTime;
+  
+  private char activityFlag;
 
   public JourneyIntermediateElement() {
     super(AtcoCifElement.Type.JOURNEY_INTERMEDIATE);
@@ -41,5 +43,23 @@ public class JourneyIntermediateElement extends JourneyTimePointElement {
 
   public void setDepartureTime(int departureTime) {
     this.departureTime = departureTime;
+  }
+
+  public char getActivityFlag() {
+    return activityFlag;
+  }
+
+  public void setActivityFlag(char activityFlag) {
+    this.activityFlag = activityFlag;
+  }
+
+  @Override
+  public boolean isPickUpAllowed() {
+    return activityFlag != 'S' && activityFlag != 'N';
+  }
+
+  @Override
+  public boolean isDropOffAllowed() {
+    return activityFlag != 'P' && activityFlag != 'N';
   }
 }

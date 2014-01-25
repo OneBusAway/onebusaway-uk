@@ -563,6 +563,12 @@ public class AtcoCifToGtfsConverter {
         stopTime.setArrivalTime(timePoint.getArrivalTime() * 60);
         stopTime.setDepartureTime(timePoint.getDepartureTime() * 60);
       }
+      if (!timePoint.isPickUpAllowed()) {
+        stopTime.setPickupType(1);
+      }
+      if (!timePoint.isDropOffAllowed()) {
+        stopTime.setDropOffType(1);
+      }
 
       stopTime.setStopSequence(_dao.getAllStopTimes().size());
       _dao.saveEntity(stopTime);

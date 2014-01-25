@@ -215,6 +215,7 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     element.setLocationId(pop(12));
     element.setArrivalTime(time(pop(4)));
     element.setDepartureTime(time(pop(4)));
+    element.setActivityFlag(pop(1).charAt(0));
     pushTimepointElement(element, handler);
   }
 

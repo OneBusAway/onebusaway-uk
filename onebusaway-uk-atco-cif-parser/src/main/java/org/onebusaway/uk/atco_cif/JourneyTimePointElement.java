@@ -49,6 +49,14 @@ public abstract class JourneyTimePointElement extends AtcoCifElement implements
   public abstract void setArrivalTime(int arrivalTime);
 
   public abstract void setDepartureTime(int departureTime);
+  
+  public boolean isPickUpAllowed() {
+    return true;
+  }
+  
+  public boolean isDropOffAllowed() {
+    return true;
+  }
 
   @Override
   public String toString() {
