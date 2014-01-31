@@ -11,10 +11,6 @@
   <name>onebusaway-uk-atco-cif-to-gtfs-converter</name>
   <description>Convert public transport data in the ATCO CIF format into GTFS.</description>
 
-  <properties>
-    <onebusaway_gtfs_version>1.3.1-SNAPSHOT</onebusaway_gtfs_version>
-  </properties>
-
   <dependencies>
     <dependency>
       <groupId>org.onebusaway</groupId>
@@ -29,12 +25,10 @@
     <dependency>
       <groupId>org.onebusaway</groupId>
       <artifactId>onebusaway-gtfs</artifactId>
-      <version>${onebusaway_gtfs_version}</version>
     </dependency>
     <dependency>
       <groupId>org.onebusaway</groupId>
       <artifactId>onebusaway-gtfs-transformer</artifactId>
-      <version>${onebusaway_gtfs_version}</version>
     </dependency>
     <dependency>
       <groupId>commons-cli</groupId>

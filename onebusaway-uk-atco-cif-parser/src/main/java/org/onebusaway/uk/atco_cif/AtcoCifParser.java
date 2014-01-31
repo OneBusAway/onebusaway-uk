@@ -63,8 +63,8 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     _typesByKey.put("QT", AtcoCifElement.Type.JOURNEY_DESTINATION);
     _typesByKey.put("QL", AtcoCifElement.Type.LOCATION);
     _typesByKey.put("QB", AtcoCifElement.Type.ADDITIONAL_LOCATION);
+    _typesByKey.put("QC", AtcoCifElement.Type.CLUSTER);
     _typesByKey.put("QV", AtcoCifElement.Type.VEHICLE_TYPE);
-    _typesByKey.put("QC", AtcoCifElement.Type.UNKNOWN);
     _typesByKey.put("QP", AtcoCifElement.Type.OPERATOR);
     _typesByKey.put("QQ", AtcoCifElement.Type.UNKNOWN);
     _typesByKey.put("QJ", AtcoCifElement.Type.UNKNOWN);
@@ -149,6 +149,9 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
         break;
       case OPERATOR:
         parseOperator(handler);
+        break;
+      case CLUSTER:
+        parseCluster(handler);
         break;
       case UNKNOWN:
         break;
@@ -318,6 +321,15 @@ public class AtcoCifParser extends AbstractParser<AtcoCifElement.Type> {
     fireElement(element, handler);
   }
 
+  private void parseCluster(ContentHandler handler) {
+    ClusterElement element = element(new ClusterElement());
+    pop(1);
+    element.setId(pop(12));
+    element.setName(pop(48));
+    element.setLocationId(pop(12));
+    fireElement(element, handler);
+  }
+  
   private void closeCurrentJourneyIfNeeded(AtcoCifElement element,
       ContentHandler handler) {
     if ((element == null || !(element instanceof JourneyChildElement))

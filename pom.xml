@@ -49,6 +49,10 @@
     <module>onebusaway-uk-parser-support</module>
   </modules>
 
+  <properties>
+    <onebusaway_gtfs_version>1.3.3</onebusaway_gtfs_version>
+  </properties>
+
   <dependencyManagement>
     <dependencies>
       <dependency>
@@ -56,6 +60,21 @@
         <artifactId>onebusaway-cli</artifactId>
         <version>1.0.1</version>
       </dependency>
+      <dependency>
+        <groupId>org.onebusaway</groupId>
+        <artifactId>onebusaway-csv-entities</artifactId>
+        <version>1.1.2</version>
+      </dependency>      
+      <dependency>
+        <groupId>org.onebusaway</groupId>
+        <artifactId>onebusaway-gtfs</artifactId>
+        <version>${onebusaway_gtfs_version}</version>
+      </dependency>
+      <dependency>
+        <groupId>org.onebusaway</groupId>
+        <artifactId>onebusaway-gtfs-transformer</artifactId>
+        <version>${onebusaway_gtfs_version}</version>
+      </dependency>            
       <dependency>
         <groupId>org.onebusaway</groupId>
         <artifactId>onebusaway-status-jetty-exporter</artifactId>

@@ -22,6 +22,7 @@ import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -51,6 +52,7 @@ import org.onebusaway.gtfs_transformer.factory.EntityRetentionGraph;
 import org.onebusaway.uk.atco_cif.AdditionalLocationElement;
 import org.onebusaway.uk.atco_cif.AtcoCifException;
 import org.onebusaway.uk.atco_cif.AtcoCifParser;
+import org.onebusaway.uk.atco_cif.ClusterElement;
 import org.onebusaway.uk.atco_cif.JourneyDateRunningElement;
 import org.onebusaway.uk.atco_cif.JourneyHeaderElement;
 import org.onebusaway.uk.atco_cif.JourneyTimePointElement;
@@ -103,6 +105,10 @@ public class AtcoCifToGtfsConverter {
   private Map<String, AdditionalLocationElement> _additionalLocationById = new HashMap<String, AdditionalLocationElement>();
 
   private Map<String, NaPTANStop> _stopsByAtcoId = new HashMap<String, NaPTANStop>();
+
+  private Map<String, String> _clusterIdByLocationId = new HashMap<String, String>();
+
+  private Map<String, List<Stop>> _stopsByClusterId = new HashMap<String, List<Stop>>();
 
   private Map<String, GreaterManchesterTimetableRowListElement> _greaterManchesterRowListsByLocationId = new HashMap<String, GreaterManchesterTimetableRowListElement>();
 
@@ -180,8 +186,7 @@ public class AtcoCifToGtfsConverter {
     _vehicleType = vehicleType;
   }
 
-  public void setKeepStopsWithNoLocationInfo(
-      boolean keepStopsWithNoLocationInfo) {
+  public void setKeepStopsWithNoLocationInfo(boolean keepStopsWithNoLocationInfo) {
     _keepStopsWithNoLocationInfo = keepStopsWithNoLocationInfo;
   }
 
@@ -258,6 +263,7 @@ public class AtcoCifToGtfsConverter {
 
   private void constructGtfs() {
     constructTrips();
+    constructStations();
     pruneTrips();
   }
 
@@ -297,13 +303,24 @@ public class AtcoCifToGtfsConverter {
     }
   }
 
-  private RouteMetadata getMetadataForRouteId(AgencyAndId routeId) {
-    RouteMetadata metadata = _routeMetadataById.get(routeId);
-    if (metadata == null) {
-      metadata = new RouteMetadata();
-      _routeMetadataById.put(routeId, metadata);
+  private void constructStations() {
+    for (List<Stop> stops : _stopsByClusterId.values()) {
+      Collections.sort(stops, new StopIdComparator());
+      double lat = 0;
+      double lon = 0;
+      for (Stop stop : stops) {
+        lat += stop.getLat();
+        lon += stop.getLon();
+      }      
+      Stop stop = stops.get(0);
+      Stop station = new Stop();
+      station.setId(id(stop.getParentStation()));
+      station.setName(stop.getName());
+      station.setLat(lat / stops.size());
+      station.setLon(lon / stops.size());
+      station.setLocationType(1);
+      _dao.saveEntity(station);
     }
-    return metadata;
   }
 
   @SuppressWarnings("unchecked")
@@ -324,6 +341,15 @@ public class AtcoCifToGtfsConverter {
       for (Object toRemove : objectsToRemove)
         _dao.removeEntity((IdentityBean<Serializable>) toRemove);
     }
+  }
+
+  private RouteMetadata getMetadataForRouteId(AgencyAndId routeId) {
+    RouteMetadata metadata = _routeMetadataById.get(routeId);
+    if (metadata == null) {
+      metadata = new RouteMetadata();
+      _routeMetadataById.put(routeId, metadata);
+    }
+    return metadata;
   }
 
   private Route getRouteForJourney(JourneyHeaderElement journey) {
@@ -697,6 +723,18 @@ public class AtcoCifToGtfsConverter {
       stop.setLat(locationSource.getLat());
       stop.setLon(locationSource.getLon());
 
+      String clusterId = _clusterIdByLocationId.get(locationId);
+      if (clusterId != null) {
+        AgencyAndId stationId = id(clusterId + "-station");
+        stop.setParentStation(stationId.getId());
+        List<Stop> stops = _stopsByClusterId.get(clusterId);
+        if (stops == null) {
+          stops = new ArrayList<Stop>();
+          _stopsByClusterId.put(clusterId, stops);
+        }
+        stops.add(stop);
+      }
+
       _dao.saveEntity(stop);
     }
     return stop;
@@ -777,6 +815,9 @@ public class AtcoCifToGtfsConverter {
       } else if (element instanceof AdditionalLocationElement) {
         AdditionalLocationElement location = (AdditionalLocationElement) element;
         _additionalLocationById.put(location.getLocationId(), location);
+      } else if (element instanceof ClusterElement) {
+        ClusterElement cluster = (ClusterElement) element;
+        _clusterIdByLocationId.put(cluster.getLocationId(), cluster.getId());
       } else if (element instanceof VehicleTypeElement) {
         VehicleTypeElement vehicle = (VehicleTypeElement) element;
         _vehicleTypesById.put(vehicle.getId(), vehicle);
@@ -819,6 +860,14 @@ public class AtcoCifToGtfsConverter {
     @Override
     public void endElement(Element element) {
 
+    }
+  }
+
+  private static class StopIdComparator implements Comparator<Stop> {
+
+    @Override
+    public int compare(Stop lhs, Stop rhs) {
+      return lhs.getId().compareTo(rhs.getId());
     }
   }
 }

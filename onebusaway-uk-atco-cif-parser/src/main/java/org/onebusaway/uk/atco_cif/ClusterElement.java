@@ -1,5 +1,5 @@
 /**
- * Copyright (C) 2012 Google, Inc.
+ * Copyright (C) 2013 Google, Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,46 +15,39 @@
  */
 package org.onebusaway.uk.atco_cif;
 
-import org.onebusaway.uk.parser.Element;
+public class ClusterElement extends AtcoCifElement {
 
-public class AtcoCifElement extends Element {
+  private String id;
 
-  public enum Type {
+  private String name;
 
-    JOURNEY_DATE_RUNNING,
+  private String locationId;
 
-    JOURNEY_HEADER,
-
-    JOURNEY_ORIGIN,
-
-    JOURNEY_INTERMEDIATE,
-
-    JOURNEY_DESTINATION,
-
-    LOCATION,
-
-    ADDITIONAL_LOCATION,
-
-    CLUSTER,
-    
-    VEHICLE_TYPE,
-
-    ROUTE_DESCRIPTION,
-
-    OPERATOR,
-    
-    EXTENSION,
-
-    UNKNOWN
+  public ClusterElement() {
+    super(AtcoCifElement.Type.CLUSTER);
   }
 
-  private final Type type;
-
-  public AtcoCifElement(Type type) {
-    this.type = type;
+  public String getId() {
+    return id;
   }
 
-  public Type getType() {
-    return type;
+  public void setId(String id) {
+    this.id = id;
+  }
+
+  public String getName() {
+    return name;
+  }
+
+  public void setName(String name) {
+    this.name = name;
+  }
+
+  public String getLocationId() {
+    return locationId;
+  }
+
+  public void setLocationId(String locationId) {
+    this.locationId = locationId;
   }
 }
