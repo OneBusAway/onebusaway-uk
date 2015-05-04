@@ -45,7 +45,7 @@
     <module>onebusaway-uk-naptan-csv</module>
     <module>onebusaway-uk-naptan-xml-2_1</module>
     <module>onebusaway-uk-network-rail-cif-parser</module>
-    <module>onebusaway-uk-network-rail-gtfs-realtime</module>
+    <!--<module>onebusaway-uk-network-rail-gtfs-realtime</module>-->
     <module>onebusaway-uk-parser-support</module>
   </modules>
 
