@@ -60,6 +60,9 @@ java -jar onebusaway-uk-atco-cif-to-gtfs-converter.jar [args] atco_cif_input_pat
     the <<<route_long_name>>> field will be set using QD Route Direction records for a
     particular route, trying each specified direction id in turn until we find a usable value.
   
+  * <<<--generateRouteForEachDirection>>> - generate a unique entry in the GTFS routes.txt file for
+    each route+direction combination in the input data.
+
   * <<<--keepStopsWithNoLocationInfo>>> - keep stops with no location information.  They are pruned by default.
   
   * <<<--pruneStopsWithPrefix=prefix>>> - prune stops with the specified stop id prefix

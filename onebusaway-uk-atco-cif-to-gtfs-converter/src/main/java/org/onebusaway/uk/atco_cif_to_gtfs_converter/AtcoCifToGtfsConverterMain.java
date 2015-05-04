@@ -58,6 +58,8 @@ public class AtcoCifToGtfsConverterMain {
   private static final String ARG_LOCATION_SCALE_FACTOR = "locationScaleFactor";
 
   private static final String ARG_PREFERRED_DIRECTION_IDS_FOR_ROUTE_DETAILS = "preferredDirectionIdsForRouteDetails";
+  
+  private static final String ARG_GENERATE_ROUTE_FOR_EACH_DIRECTION = "generateRouteForEachDirection";
 
   private static final String ARG_NAPTAN_CSV_PATH = "naptanCsvPath";
 
@@ -161,6 +163,8 @@ public class AtcoCifToGtfsConverterMain {
       String ids = cli.getOptionValue(ARG_PREFERRED_DIRECTION_IDS_FOR_ROUTE_DETAILS);
       converter.setPreferredDirectionIdsForRouteDetails(Arrays.asList(ids.split(",")));
     }
+    converter.setGenerateRouteForEachDirection(
+        cli.hasOption(ARG_GENERATE_ROUTE_FOR_EACH_DIRECTION));
     if (cli.hasOption(ARG_NAPTAN_CSV_PATH)) {
       converter.setNaptanCsvPath(new File(
           cli.getOptionValue(ARG_NAPTAN_CSV_PATH)));
@@ -190,6 +194,7 @@ public class AtcoCifToGtfsConverterMain {
     options.addOption(ARG_KEEP_TRIPS_WITH_MISSING_STOPS, false, "");
     options.addOption(ARG_LOCATION_SCALE_FACTOR, true, "");
     options.addOption(ARG_PREFERRED_DIRECTION_IDS_FOR_ROUTE_DETAILS, true, "");
+    options.addOption(ARG_GENERATE_ROUTE_FOR_EACH_DIRECTION, false, "");
     options.addOption(ARG_NAPTAN_CSV_PATH, true, "");
     options.addOption(ARG_NATIONAL_EXPRESS_EXTENSIONS, false, "");
     options.addOption(ARG_GREATER_MANCHESTER_EXTENSIONS, false, "");

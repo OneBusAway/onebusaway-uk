@@ -15,22 +15,6 @@
  */
 package org.onebusaway.uk.atco_cif_to_gtfs_converter;
 
-import java.io.File;
-import java.io.IOException;
-import java.io.Serializable;
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Comparator;
-import java.util.Date;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
-import java.util.TimeZone;
-
 import org.onebusaway.csv_entities.CsvEntityReader;
 import org.onebusaway.csv_entities.EntityHandler;
 import org.onebusaway.csv_entities.schema.AnnotationDrivenEntitySchemaFactory;
@@ -71,6 +55,23 @@ import org.onebusaway.uk.parser.ContentHandler;
 import org.onebusaway.uk.parser.Element;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.io.File;
+import java.io.IOException;
+import java.io.Serializable;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.Calendar;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.TimeZone;
 
 public class AtcoCifToGtfsConverter {
 
@@ -135,6 +136,12 @@ public class AtcoCifToGtfsConverter {
   private boolean _keepTripsWithMissingStops = false;
 
   private List<String> _preferredDirectionIdsForRouteDetails = Collections.emptyList();
+  
+  /**
+   * If true, a distinct GTFS route will be generated for each route+direction
+   * combination in the source data.
+   */
+  private boolean _generateRouteForEachDirection = false;
 
   private File _naptanCsvPath;
 
@@ -200,6 +207,10 @@ public class AtcoCifToGtfsConverter {
 
   public void setPreferredDirectionIdsForRouteDetails(List<String> ids) {
     _preferredDirectionIdsForRouteDetails = ids;
+  }
+  
+  public void setGenerateRouteForEachDirection(boolean generateRouteForEachDirection) {
+    _generateRouteForEachDirection = generateRouteForEachDirection;
   }
 
   public void setNaptanCsvPath(File naptanCsvPath) {
@@ -363,20 +374,26 @@ public class AtcoCifToGtfsConverter {
       route.setType(getRouteTypeForJourney(journey));
       RouteMetadata metaData = _routeMetadataById.get(routeId);
       if (metaData != null) {
-        for (String id : _preferredDirectionIdsForRouteDetails) {
+        Collection<String> directionIds =
+            !_preferredDirectionIdsForRouteDetails.isEmpty()
+            ? _preferredDirectionIdsForRouteDetails
+            : metaData.getDirections();
+        for (String id : directionIds) {
           String longName = metaData.getRouteLongNameForDirectionId(id);
           if (longName != null) {
             route.setLongName(longName);
             break;
           }
         }
-        for (String id : _preferredDirectionIdsForRouteDetails) {
+        for (String id : directionIds) {
           String routeUrl = metaData.getRouteUrlForDirectionId(id);
           if (routeUrl != null) {
             route.setUrl(routeUrl);
             break;
           }
         }
+      } else {
+        System.err.println("No metadata for route");
       }
       _dao.saveEntity(route);
     }
@@ -384,15 +401,21 @@ public class AtcoCifToGtfsConverter {
   }
 
   private AgencyAndId getRouteIdForJourney(JourneyHeaderElement journey) {
-    return getRouteId(journey.getOperatorId(), journey.getRouteIdentifier());
+    return getRouteId(journey.getOperatorId(), journey.getRouteIdentifier(),
+        journey.getRouteDirection());
   }
 
-  private AgencyAndId getRouteId(String operatorId, String routeId) {
-    // Note that we include the operator id in the id portion as well
+  private AgencyAndId getRouteId(String operatorId, String routeId,
+      String directionId) {
+  // Note that we include the operator id in the id portion as well
     // because
     // the route identifiers are not unique by themselves in the output
     // GTFS.
-    return new AgencyAndId(operatorId, operatorId + "-" + routeId);
+    String id = operatorId + "-" + routeId;
+    if (_generateRouteForEachDirection) {
+      id += "-" + directionId;
+    }
+    return new AgencyAndId(operatorId, id);
   }
 
   private Agency getAgencyForId(String id) {
@@ -823,8 +846,8 @@ public class AtcoCifToGtfsConverter {
         _vehicleTypesById.put(vehicle.getId(), vehicle);
       } else if (element instanceof RouteDescriptionElement) {
         RouteDescriptionElement route = (RouteDescriptionElement) element;
-        AgencyAndId id = new AgencyAndId(route.getOperatorId(),
-            route.getOperatorId() + "-" + route.getRouteNumber());
+        AgencyAndId id = getRouteId(route.getOperatorId(),
+            route.getRouteNumber(), route.getRouteDirection());
         RouteMetadata metadata = getMetadataForRouteId(id);
         metadata.addRouteDescription(route);
       } else if (element instanceof OperatorElement) {
@@ -847,7 +870,7 @@ public class AtcoCifToGtfsConverter {
       } else if (element instanceof NationalExpressRouteDetailsElement) {
         NationalExpressRouteDetailsElement details = (NationalExpressRouteDetailsElement) element;
         AgencyAndId routeId = getRouteId(details.getOperatorId(),
-            details.getRouteId());
+            details.getRouteId(), details.getDirectionId());
         RouteMetadata metadata = getMetadataForRouteId(routeId);
         metadata.addNXRouteDetails(details);
       } else if (element instanceof GreaterManchesterTimetableRowListElement) {

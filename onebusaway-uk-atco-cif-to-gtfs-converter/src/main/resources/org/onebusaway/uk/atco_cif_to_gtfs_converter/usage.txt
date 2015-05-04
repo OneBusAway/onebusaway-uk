@@ -37,6 +37,12 @@ Args:
   be set using QD Route Direction records for a particular route, trying each
   specified direction id in turn until we find a usable value.
 
+  --generateRouteForEachDirection
+  
+    Generate a unique entry in the GTFS routes.txt file for each route+direction
+  combination in the input data.  Normally, different directions for the same
+  route are groups together under the same GTFS route.
+
   --keepStopsWithNoLocationInfo 
 
     If specified, stops without location information in your ATCO CIF feed will

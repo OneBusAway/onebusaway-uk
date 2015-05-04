@@ -15,6 +15,7 @@
  */
 package org.onebusaway.uk.atco_cif_to_gtfs_converter;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Map;
@@ -39,6 +40,10 @@ public class RouteMetadata {
 
   public void addDirection(String routeDirection) {
     _directions.add(routeDirection);
+  }
+  
+  public Collection<String> getDirections() {
+    return _directions;
   }
 
   public RouteDescriptionElement getRouteDescriptionForDirection(
